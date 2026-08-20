@@ -21,3 +21,20 @@ class User(AbstractUser):
 
     def __str__(self):
         return f"{self.get_full_name() or self.email}"
+
+
+class PasswordResetToken(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='password_reset_tokens')
+    token = models.CharField(max_length=64, unique=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    expires_at = models.DateTimeField()
+    used = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Reset token for {self.user.email}"
+
+    def is_valid(self):
+        return not self.used and timezone.now() < self.expires_at

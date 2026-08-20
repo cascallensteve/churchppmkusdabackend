@@ -1,7 +1,8 @@
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
 from django.conf import settings
-from accounts.models import User
+from django.contrib.auth import get_user_model
+from accounts.models import User, PasswordResetToken
 from accounts.utils import (
     hash_pin,
     verify_pin,
@@ -142,6 +143,25 @@ class SetPinSerializer(serializers.Serializer):
 
 class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(write_only=True)
+
+    def validate_new_password(self, value):
+        validate_password(value)
+        return value
+
+
+class ForgotPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        value = value.lower().strip()
+        if not User.objects.filter(email=value).exists():
+            raise serializers.ValidationError('No user found with this email address.')
+        return value
+
+
+class ResetPasswordSerializer(serializers.Serializer):
+    token = serializers.CharField()
     new_password = serializers.CharField(write_only=True)
 
     def validate_new_password(self, value):

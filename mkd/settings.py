@@ -2,35 +2,30 @@ import os
 from pathlib import Path
 from datetime import timedelta
 from urllib.parse import urlparse
-from decouple import config
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = config('SECRET_KEY', default='django-insecure-CHANGE-ME-IN-PRODUCTION')
+SECRET_KEY = 'django-insecure-CHANGE-ME-IN-PRODUCTION'
 
-DEBUG = config('DEBUG', default=True, cast=bool)
+DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
-def get_database_config():
-    database_url = config('DATABASE_URL', default=None)
-    if database_url:
-        parsed = urlparse(database_url)
-        return {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': parsed.path.lstrip('/'),
-            'USER': parsed.username,
-            'PASSWORD': parsed.password,
-            'HOST': parsed.hostname,
-            'PORT': parsed.port or '5432',
-        }
-    return {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+FRONTEND_URL = 'http://localhost:5173'
+DEFAULT_FROM_EMAIL = 'MKUSD Treasury <noreply@mkusda.church>'
 
+DATABASE_URL = 'postgresql://neondb_owner:npg_dEYfT5X9apuJ@ep-fragrant-snow-ay8x0dl5-pooler.c-5.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require'
+
+parsed = urlparse(DATABASE_URL)
 DATABASES = {
-    'default': get_database_config()
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': parsed.path.lstrip('/'),
+        'USER': parsed.username,
+        'PASSWORD': parsed.password,
+        'HOST': parsed.hostname,
+        'PORT': parsed.port or '5432',
+    }
 }
 
 INSTALLED_APPS = [
@@ -123,3 +118,10 @@ CORS_ALLOW_CREDENTIALS = True
 
 LOGIN_ATTEMPT_LIMIT = 5
 LOGIN_LOCKOUT_DURATION = 60
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_HOST = ''
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = ''
+EMAIL_HOST_PASSWORD = ''
