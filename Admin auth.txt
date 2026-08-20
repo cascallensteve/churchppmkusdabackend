@@ -1,0 +1,583 @@
+# MKUSD Treasury Backend
+
+Django REST API with JWT authentication, PIN-based login, account lockout, and profile management.
+
+---
+
+## Table of Contents
+
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Quick Start](#quick-start)
+- [Environment Variables](#environment-variables)
+- [Seeding Users](#seeding-users)
+- [Authentication Flow](#authentication-flow)
+- [API Endpoints](#api-endpoints)
+  - [Login](#login)
+  - [Account](#account)
+  - [Profile](#profile)
+  - [Security](#security)
+  - [Token Refresh](#token-refresh)
+- [Data Models](#data-models)
+- [Security Features](#security-features)
+- [Admin Panel](#admin-panel)
+- [Error Responses](#error-responses)
+
+---
+
+## Tech Stack
+
+| Component | Technology |
+|-----------|-----------|
+| Framework | Django 5.1 |
+| API | Django REST Framework 3.15 |
+| Authentication | Simple JWT 5.3 |
+| Database | SQLite (local) / PostgreSQL Neon (production) |
+| CORS | django-cors-headers |
+
+---
+
+## Project Structure
+
+```
+mkusdabackend/
+├── manage.py                  # Django CLI entrypoint
+├── requirements.txt           # Python dependencies
+├── .env.example               # Environment template
+├── Admin auth.txt             # This documentation
+├── db.sqlite3                 # SQLite database for local development (gitignored)
+├── mkd/                       # Django project config
+│   ├── __init__.py
+│   ├── settings.py            # Global settings
+│   ├── urls.py                # Root URL config
+│   ├── wsgi.py
+│   └── asgi.py
+└── accounts/                  # Main app
+    ├── __init__.py
+    ├── admin.py               # Django admin config
+    ├── apps.py
+    ├── models.py              # User model
+    ├── serializers.py         # DRF serializers
+    ├── urls.py                # App URL routes
+    ├── utils.py               # PIN & lockout helpers
+    ├── views.py               # Function-based views
+    └── management/
+        └── commands/
+            └── seed_users.py  # Seed admin user
+```
+
+---
+
+## Quick Start
+
+```bash
+# 1. Clone and enter project
+cd Treasuty-mkusdabackend
+
+# 2. Create virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# 3. Install dependencies
+pip install -r requirements.txt
+
+# 4. Configure environment
+cp .env.example .env
+
+# 5. Run migrations (SQLite is used automatically when DATABASE_URL is not set)
+python manage.py migrate
+
+# 7. Seed admin user
+python manage.py seed_users
+
+# 8. Start server
+python manage.py runserver
+```
+
+Server runs at `http://localhost:8000/`
+
+---
+
+## Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `SECRET_KEY` | Django secret key |
+| `DEBUG` | Debug mode |
+| `DATABASE_URL` | Production Neon PostgreSQL URL (leave unset for local SQLite) |
+| `LOGIN_ATTEMPT_LIMIT` | Failed attempts before lockout |
+| `LOGIN_LOCKOUT_DURATION` | Lockout duration in seconds |
+
+---
+
+## Database Configuration
+
+The app automatically selects the database based on environment:
+
+- **Local development**: Uses **SQLite** (`db.sqlite3`) when `DATABASE_URL` is not set
+- **Production**: Uses **Neon PostgreSQL** when `DATABASE_URL` is set
+
+No code changes needed — just set or unset `DATABASE_URL` in your environment.
+
+**Local `.env` example:**
+```
+SECRET_KEY=change-me-in-production
+DEBUG=True
+# No DATABASE_URL = uses SQLite
+```
+
+**Production `.env` example:**
+```
+SECRET_KEY=your-secret-key
+DEBUG=False
+DATABASE_URL=postgres://user:password@host:port/database
+```
+
+---
+
+## Seeding Users
+
+No registration endpoint exists. Users are created via Django admin or the seed command:
+
+```bash
+python manage.py seed_users
+```
+
+Creates the default admin:
+
+| Field | Value |
+|-------|-------|
+| Email | `mkusdachurchtreasry@gmail.com` |
+| Password | `treasury2026` |
+| PIN | `0000` |
+
+---
+
+## Authentication Flow
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  1. First Login (Email + Password)                          │
+│     POST /api/auth/login/                                   │
+│     {"email": "...", "password": "..."}                     │
+│     → Response includes "pin_setup_required": true          │
+├─────────────────────────────────────────────────────────────┤
+│  2. Set PIN (Authenticated)                                 │
+│     POST /api/auth/account/set-pin/                         │
+│     Authorization: Bearer <token>                           │
+│     {"pin": "1234"}                                         │
+├─────────────────────────────────────────────────────────────┤
+│  3. Subsequent Logins (Email + PIN)                         │
+│     POST /api/auth/login/                                   │
+│     {"email": "...", "pin": "1234"}                         │
+│     → Response includes "pin_setup_required": false         │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## API Endpoints
+
+Base URL: `http://localhost:8000/api/auth/`
+
+---
+
+### Login
+
+#### `POST /login/`
+
+Authenticate with email + password OR email + PIN.
+
+**Password Login:**
+
+```json
+{
+  "email": "mkusdachurchtreasry@gmail.com",
+  "password": "treasury2026"
+}
+```
+
+**PIN Login:**
+
+```json
+{
+  "email": "mkusdachurchtreasry@gmail.com",
+  "pin": "0000"
+}
+```
+
+**Success Response (200 OK):**
+
+```json
+{
+  "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": 1,
+    "email": "mkusdachurchtreasry@gmail.com",
+    "username": "mkusdachurchtreasry",
+    "full_name": "MKUSDA Treasury",
+    "pin_setup_complete": true,
+    "created_at": "2026-08-20T11:56:17.688758Z"
+  },
+  "pin_setup_required": false
+}
+```
+
+---
+
+### Account
+
+#### `GET /account/me/`
+
+Get current authenticated user profile (lightweight).
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "id": 1,
+  "email": "mkusdachurchtreasry@gmail.com",
+  "username": "mkusdachurchtreasry",
+  "full_name": "MKUSDA Treasury",
+  "pin_setup_complete": true,
+  "created_at": "2026-08-20T11:56:17.688758Z"
+}
+```
+
+---
+
+#### `POST /account/set-pin/`
+
+Set a 4-6 digit PIN. Only available when authenticated.
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
+
+**Request:**
+
+```json
+{
+  "pin": "1234"
+}
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "detail": "PIN set successfully."
+}
+```
+
+---
+
+#### `POST /account/change-password/`
+
+Change password. Requires current password.
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
+
+**Request:**
+
+```json
+{
+  "old_password": "treasury2026",
+  "new_password": "NewPass123!"
+}
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "detail": "Password changed successfully."
+}
+```
+
+---
+
+### Profile
+
+#### `GET /account/profile/`
+
+Get full profile with all editable fields.
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "id": 1,
+  "email": "mkusdachurchtreasry@gmail.com",
+  "username": "mkusdachurchtreasry",
+  "first_name": "MKUSDA",
+  "last_name": "Treasury",
+  "full_name": "MKUSDA Treasury",
+  "profile_picture": "https://example.com/avatar.jpg",
+  "pin_setup_complete": true,
+  "created_at": "2026-08-20T11:56:17.688758Z",
+  "updated_at": "2026-08-20T12:46:46.137764Z"
+}
+```
+
+---
+
+#### `PATCH /account/profile/`
+
+Update profile fields. All fields are optional.
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+Content-Type: application/json
+```
+
+**Request:**
+
+```json
+{
+  "first_name": "MKUSDA",
+  "last_name": "Treasury",
+  "username": "mkusda_treasury",
+  "profile_picture": "https://example.com/new-avatar.jpg"
+}
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "id": 1,
+  "email": "mkusdachurchtreasry@gmail.com",
+  "username": "mkusda_treasury",
+  "first_name": "MKUSDA",
+  "last_name": "Treasury",
+  "full_name": "MKUSDA Treasury",
+  "profile_picture": "https://example.com/new-avatar.jpg",
+  "pin_setup_complete": true,
+  "created_at": "2026-08-20T11:56:17.688758Z",
+  "updated_at": "2026-08-20T13:00:00.000000Z"
+}
+```
+
+---
+
+### Security
+
+#### `POST /logout/`
+
+Blacklist the refresh token.
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
+
+**Request:**
+
+```json
+{
+  "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "detail": "Logged out successfully."
+}
+```
+
+---
+
+### Token Refresh
+
+#### `POST /api/token/refresh/`
+
+Refresh an expired access token using a valid refresh token.
+
+**Request:**
+
+```json
+{
+  "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+---
+
+## Data Models
+
+### User
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | AutoField | Primary key |
+| `email` | EmailField | Unique, used as username |
+| `username` | CharField | Unique username |
+| `first_name` | CharField | First name |
+| `last_name` | CharField | Last name |
+| `password` | CharField | Hashed password |
+| `pin` | CharField | Hashed PIN (nullable) |
+| `pin_setup_complete` | BooleanField | True when PIN is set |
+| `failed_login_attempts` | PositiveIntegerField | Consecutive failed attempts |
+| `lockout_until` | DateTimeField | Account lockout expiry |
+| `profile_picture` | URLField | Profile image URL |
+| `created_at` | DateTimeField | Account creation timestamp |
+| `updated_at` | DateTimeField | Last profile update timestamp |
+| `is_active` | BooleanField | Django user active flag |
+| `is_staff` | BooleanField | Django admin access |
+| `is_superuser` | BooleanField | Django full admin access |
+
+---
+
+## Security Features
+
+### Account Lockout
+
+- **5 failed attempts** (password or PIN) triggers a **1-minute lockout**
+- During lockout, all login attempts return:
+  ```json
+  {
+    "detail": "Account locked. Try again in 45 seconds.",
+    "lockout_remaining": 45
+  }
+  ```
+- Failed attempts reset on successful login
+
+### PIN Security
+
+- PINs are **hashed** using Django's password hashers
+- PIN must be **4-6 numeric digits**
+- PIN login requires **email + PIN** (no standalone PIN entry)
+- PIN can only be set when **already authenticated**
+
+### No Registration
+
+- No public registration endpoint
+- Users are created via:
+  - Django admin panel
+  - `python manage.py seed_users` command
+
+### JWT Tokens
+
+- **Access token**: 12 hours lifetime
+- **Refresh token**: 7 days lifetime
+- Tokens include custom claims: `email`, `full_name`
+- Refresh tokens are blacklisted on logout
+
+---
+
+## Admin Panel
+
+Access at `http://localhost:8000/admin/`
+
+**Credentials:**
+- Email: `mkusdachurchtreasry@gmail.com`
+- Password: `treasury2026`
+
+Admin features:
+- View all users
+- Create new users
+- Manage PINs and security settings
+- Toggle user active/inactive status
+
+---
+
+## Error Responses
+
+### 400 Bad Request
+
+```json
+{
+  "detail": "Provide either password or pin."
+}
+```
+
+```json
+{
+  "pin": ["PIN must be 4-6 digits."]
+}
+```
+
+```json
+{
+  "old_password": "Incorrect current password."
+}
+```
+
+### 401 Unauthorized
+
+```json
+{
+  "detail": "Invalid credentials. 3 attempts remaining."
+}
+```
+
+```json
+{
+  "detail": "Account locked. Try again in 60 seconds.",
+  "lockout_remaining": 60
+}
+```
+
+```json
+{
+  "detail": "Given token not valid for any token type",
+  "code": "token_not_valid",
+  "messages": [
+    {
+      "token_class": "AccessToken",
+      "message": "token is expired",
+      "expired": "2026-08-20T12:00:00Z"
+    }
+  ]
+}
+```
+
+---
+
+## CORS Configuration
+
+Configured to allow specific origins:
+
+```python
+CORS_ALLOWED_ORIGINS = [
+    'https://mkusda-church-treasury-fronted.vercel.app',
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+]
+CORS_ALLOW_CREDENTIALS = True
+```
+
+Add any additional frontend domains to `CORS_ALLOWED_ORIGINS` in `mkd/settings.py`.
+
+---
+
+## License
+
+Private - MKUSD Treasury System
