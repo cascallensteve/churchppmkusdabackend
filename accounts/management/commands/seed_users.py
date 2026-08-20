@@ -9,9 +9,9 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         users = [
             {
-                'email': 'mkusdachurchtreasry@gmail.com',
-                'username': 'mkusdachurchtreasry',
-                'first_name': 'MKUSDA',
+                'email': 'cascallensteve@gmail.com',
+                'username': 'mkusdachurch',
+                'first_name': 'MKUS',
                 'last_name': 'Treasury',
                 'password': 'treasury2026',
                 'pin': '0000',
@@ -23,15 +23,31 @@ class Command(BaseCommand):
 
         for data in users:
             email = data['email']
-            if User.objects.filter(email=email).exists():
-                self.stdout.write(self.style.WARNING(f'User {email} already exists.'))
-                continue
+            username = data['username']
 
-            password = data.pop('password')
-            pin = data.pop('pin')
-            user = User(**data)
-            user.set_password(password)
-            user.pin = hash_pin(pin)
-            user.pin_setup_complete = True
-            user.save()
-            self.stdout.write(self.style.SUCCESS(f'Created admin: {email}'))
+            user = User.objects.filter(email=email).first()
+            if not user:
+                user = User.objects.filter(username=username).first()
+
+            if user:
+                password = data.get('password')
+                pin = data.get('pin')
+                if password:
+                    user.set_password(password)
+                if pin:
+                    user.pin = hash_pin(pin)
+                    user.pin_setup_complete = True
+                user.is_staff = data.get('is_staff', user.is_staff)
+                user.is_superuser = data.get('is_superuser', user.is_superuser)
+                user.is_active = data.get('is_active', user.is_active)
+                user.save()
+                self.stdout.write(self.style.WARNING(f'Updated user: {email}'))
+            else:
+                password = data.pop('password')
+                pin = data.pop('pin')
+                user = User(**data)
+                user.set_password(password)
+                user.pin = hash_pin(pin)
+                user.pin_setup_complete = True
+                user.save()
+                self.stdout.write(self.style.SUCCESS(f'Created admin: {email}'))

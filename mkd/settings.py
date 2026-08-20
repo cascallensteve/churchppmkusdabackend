@@ -119,9 +119,10 @@ CORS_ALLOW_CREDENTIALS = True
 LOGIN_ATTEMPT_LIMIT = 5
 LOGIN_LOCKOUT_DURATION = 60
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-EMAIL_HOST = ''
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = ''
-EMAIL_HOST_PASSWORD = ''
+EMAIL_HOST_USER = 'cascallensteve@gmail.com'
+EMAIL_HOST_PASSWORD = 'xivpyblbpyfpsimf'
+DEFAULT_FROM_EMAIL = 'MKUSD Treasury <cascallensteve@gmail.com>'
