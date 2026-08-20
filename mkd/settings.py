@@ -69,7 +69,7 @@ TEMPLATES = [
         },
     },
 ]
-
+0000
 WSGI_APPLICATION = 'mkd.wsgi.application'
 ASGI_APPLICATION = 'mkd.asgi.application'
 

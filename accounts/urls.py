@@ -3,6 +3,7 @@ from accounts import views
 
 urlpatterns = [
     path('login/', views.login_view, name='login'),
+    path('verify-pin/', views.verify_pin_view, name='verify_pin'),
     path('account/me/', views.account_me_view, name='account_me'),
     path('account/profile/', views.profile_view, name='profile'),
     path('account/set-pin/', views.set_pin_view, name='set_pin'),

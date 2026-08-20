@@ -24,6 +24,14 @@ from accounts.serializers import (
     ProfileSerializer,
 )
 from accounts.models import User, PasswordResetToken
+from accounts.utils import (
+    is_locked,
+    verify_pin,
+    increment_failed_attempts,
+    reset_failed_attempts,
+    get_remaining_attempts,
+    get_lockout_remaining_seconds,
+)
 
 
 @api_view(['POST'])
@@ -131,6 +139,61 @@ def logout_view(request):
     except Exception:
         pass
     return Response({'detail': 'Logged out successfully.'}, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def verify_pin_view(request):
+    email = request.data.get('email', '').lower().strip()
+    pin = request.data.get('pin')
+
+    if not email or not pin:
+        return Response(
+            {'detail': 'Email and PIN are required.'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        user = User.objects.get(email=email)
+    except User.DoesNotExist:
+        return Response(
+            {'detail': 'Invalid credentials.'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if is_locked(user):
+        seconds = get_lockout_remaining_seconds(user)
+        return Response(
+            {'detail': f'Account locked. Try again in {seconds} seconds.', 'lockout_remaining': seconds},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if not user.pin_setup_complete or not verify_pin(pin, user.pin):
+        attempts = increment_failed_attempts(user)
+        remaining = get_remaining_attempts(user)
+        if remaining == 0:
+            seconds = get_lockout_remaining_seconds(user)
+            return Response(
+                {'detail': f'Account locked after {settings.LOGIN_ATTEMPT_LIMIT} failed attempts. Try again in {seconds} seconds.', 'lockout_remaining': seconds},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return Response(
+            {'detail': f'Invalid PIN. {remaining} attempts remaining.', 'remaining_attempts': remaining},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    reset_failed_attempts(user)
+
+    refresh = RefreshToken.for_user(user)
+    access = refresh.access_token
+    access['email'] = user.email
+    access['full_name'] = user.get_full_name()
+
+    return Response({
+        'access': str(access),
+        'refresh': str(refresh),
+        'user': UserSerializer(user).data,
+    }, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
