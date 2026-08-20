@@ -96,6 +96,12 @@ python manage.py runserver
 
 Server runs at `http://localhost:8000/`
 
+When you run the server locally, the root URL (`/`) shows a **System Running** page with:
+- Real-time system status
+- Database connection indicator
+- Environment mode display
+- Quick link to API documentation
+
 ---
 
 ## Environment Variables

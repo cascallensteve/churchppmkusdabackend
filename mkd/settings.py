@@ -62,7 +62,7 @@ ROOT_URLCONF = 'mkd.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'mkd' / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
