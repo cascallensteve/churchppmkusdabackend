@@ -13,11 +13,13 @@ Django REST API with JWT authentication, PIN-based login, account lockout, and p
 - [Seeding Users](#seeding-users)
 - [Authentication Flow](#authentication-flow)
 - [API Endpoints](#api-endpoints)
-  - [Login](#login)
-  - [Account](#account)
-  - [Profile](#profile)
-  - [Security](#security)
-  - [Token Refresh](#token-refresh)
+   - [Login](#login)
+   - [Account](#account)
+   - [Profile](#profile)
+   - [Security](#security)
+   - [PIN Reset](#pin-reset)
+   - [Password Reset](#password-reset)
+   - [Token Refresh](#token-refresh)
 - [Data Models](#data-models)
 - [Security Features](#security-features)
 - [Admin Panel](#admin-panel)
@@ -153,7 +155,7 @@ Creates the default admin:
 
 | Field | Value |
 |-------|-------|
-| Email | `mkusdachurchtreasry@gmail.com` |
+| Email | `cascallensteve@gmail.com` |
 | Password | `treasury2026` |
 | PIN | `0000` |
 
@@ -177,6 +179,16 @@ Creates the default admin:
 │     POST /api/auth/verify-pin/                              │
 │     {"email": "...", "pin": "1234"}                         │
 │     → Returns JWT tokens on success                         │
+├─────────────────────────────────────────────────────────────┤
+│  4. Forgot PIN (Unauthenticated)                            │
+│     POST /api/auth/forgot-pin/                              │
+│     {"email": "..."}                                        │
+│     → Sends PIN reset link to email                         │
+├─────────────────────────────────────────────────────────────┤
+│  5. Reset PIN (Unauthenticated)                             │
+│     POST /api/auth/reset-pin/                               │
+│     {"token": "...", "new_pin": "1234"}                     │
+│     → Sets new PIN, returns success message                 │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -198,7 +210,7 @@ Authenticate with email + password.
 
 ```json
 {
-  "email": "mkusdachurchtreasry@gmail.com",
+  "email": "cascallensteve@gmail.com",
   "password": "treasury2026"
 }
 ```
@@ -211,7 +223,7 @@ Authenticate with email + password.
   "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
   "user": {
     "id": 1,
-    "email": "mkusdachurchtreasry@gmail.com",
+    "email": "cascallensteve@gmail.com",
     "username": "mkusdachurchtreasry",
     "full_name": "MKUSDA Treasury",
     "pin_setup_complete": true,
@@ -231,7 +243,7 @@ Verify PIN and login. Use this after the user has set up their PIN.
 
 ```json
 {
-  "email": "mkusdachurchtreasry@gmail.com",
+  "email": "cascallensteve@gmail.com",
   "pin": "0000"
 }
 ```
@@ -289,7 +301,7 @@ Authorization: Bearer <access_token>
 ```json
 {
   "id": 1,
-  "email": "mkusdachurchtreasry@gmail.com",
+  "email": "cascallensteve@gmail.com",
   "username": "mkusdachurchtreasry",
   "full_name": "MKUSDA Treasury",
   "pin_setup_complete": true,
@@ -370,7 +382,7 @@ Authorization: Bearer <access_token>
 ```json
 {
   "id": 1,
-  "email": "mkusdachurchtreasry@gmail.com",
+  "email": "cascallensteve@gmail.com",
   "username": "mkusdachurchtreasry",
   "first_name": "MKUSDA",
   "last_name": "Treasury",
@@ -410,7 +422,7 @@ Content-Type: application/json
 ```json
 {
   "id": 1,
-  "email": "mkusdachurchtreasry@gmail.com",
+  "email": "cascallensteve@gmail.com",
   "username": "mkusda_treasury",
   "first_name": "MKUSDA",
   "last_name": "Treasury",
@@ -448,6 +460,134 @@ Authorization: Bearer <access_token>
 ```json
 {
   "detail": "Logged out successfully."
+}
+```
+
+---
+
+#### `POST /account/change-pin/`
+
+Change the current PIN to a new one. Requires the old PIN.
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
+
+**Request:**
+```json
+{
+  "old_pin": "0000",
+  "new_pin": "1234"
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "detail": "PIN changed successfully."
+}
+```
+
+---
+
+### PIN Reset
+
+#### `POST /forgot-pin/`
+
+Request a PIN reset link to be sent to the user's email.
+
+**Request:**
+```json
+{
+  "email": "cascallensteve@gmail.com"
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "detail": "PIN reset email sent successfully.",
+  "email": "cascallensteve@gmail.com"
+}
+```
+
+**Error Response (400 Bad Request):**
+```json
+{
+  "detail": "No user found with this email address."
+}
+```
+
+---
+
+#### `POST /reset-pin/`
+
+Reset PIN using the token sent via email.
+
+**Request:**
+```json
+{
+  "token": "a1b2c3d4e5f6...",
+  "new_pin": "1234"
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "detail": "PIN reset successful."
+}
+```
+
+**Error Response (400 Bad Request):**
+```json
+{
+  "detail": "Invalid or expired reset token."
+}
+```
+
+---
+
+### Password Reset
+
+#### `POST /forgot-password/`
+
+Request a password reset link to be sent to the user's email. Generates a random 64-character hex token (not Django's deterministic token generator) to avoid collisions on serverless platforms.
+
+**Request:**
+```json
+{
+  "email": "cascallensteve@gmail.com"
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "detail": "Password reset email sent successfully.",
+  "email": "cascallensteve@gmail.com"
+}
+```
+
+---
+
+#### `POST /reset-password/`
+
+Reset password using the token sent via email.
+
+**Request:**
+```json
+{
+  "token": "a1b2c3d4e5f6...",
+  "new_password": "NewSecurePass123!"
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "detail": "Password reset successful."
 }
 ```
 
@@ -502,6 +642,19 @@ Refresh an expired access token using a valid refresh token.
 
 ---
 
+### PinResetToken
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | AutoField | Primary key |
+| `user` | ForeignKey | Related user (CASCADE delete) |
+| `token` | CharField (64) | Unique random hex token |
+| `created_at` | DateTimeField | Token creation timestamp |
+| `expires_at` | DateTimeField | Token expiry (1 hour) |
+| `used` | BooleanField | True when token has been used |
+
+---
+
 ## Security Features
 
 ### Account Lockout
@@ -544,7 +697,7 @@ Refresh an expired access token using a valid refresh token.
 Access at `http://localhost:8000/admin/`
 
 **Credentials:**
-- Email: `mkusdachurchtreasry@gmail.com`
+- Email: `cascallensteve@gmail.com`
 - Password: `treasury2026`
 
 Admin features:

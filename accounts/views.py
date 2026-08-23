@@ -1,7 +1,7 @@
+import secrets
 from django.contrib.auth.hashers import make_password
 from django.utils import timezone
 from datetime import timedelta
-from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_encode
@@ -20,10 +20,12 @@ from accounts.serializers import (
     ChangePasswordSerializer,
     ForgotPasswordSerializer,
     ResetPasswordSerializer,
+    ForgotPinSerializer,
+    ResetPinSerializer,
     UserSerializer,
     ProfileSerializer,
 )
-from accounts.models import User, PasswordResetToken
+from accounts.models import User, PasswordResetToken, PinResetToken
 from accounts.utils import (
     is_locked,
     verify_pin,
@@ -111,6 +113,35 @@ def set_pin_view(request):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
+def change_pin_view(request):
+    serializer = ChangePinSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    old_pin = serializer.validated_data['old_pin']
+    new_pin = serializer.validated_data['new_pin']
+
+    if not request.user.pin_setup_complete:
+        return Response(
+            {'detail': 'PIN not set. Please set a PIN first.'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if not verify_pin(old_pin, request.user.pin):
+        return Response(
+            {'old_pin': 'Incorrect current PIN.'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    request.user.pin = make_password(new_pin)
+    request.user.save(update_fields=['pin'])
+
+    return Response(
+        {'detail': 'PIN changed successfully.'},
+        status=status.HTTP_200_OK,
+    )
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def change_password_view(request):
     serializer = ChangePasswordSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
@@ -126,6 +157,7 @@ def change_password_view(request):
     request.user.set_password(new_password)
     request.user.save(update_fields=['password'])
     return Response({'detail': 'Password changed successfully.'}, status=status.HTTP_200_OK)
+
 
 
 @api_view(['POST'])
@@ -204,8 +236,7 @@ def forgot_password_view(request):
     email = serializer.validated_data['email']
     user = User.objects.get(email=email)
 
-    token_generator = PasswordResetTokenGenerator()
-    token = token_generator.make_token(user)
+    token = secrets.token_hex(32)
     uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
 
     PasswordResetToken.objects.create(
@@ -242,6 +273,7 @@ def forgot_password_view(request):
     )
 
 
+
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def reset_password_view(request):
@@ -272,5 +304,78 @@ def reset_password_view(request):
 
     return Response(
         {'detail': 'Password reset successful.'},
+        status=status.HTTP_200_OK,
+    )
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def forgot_pin_view(request):
+    serializer = ForgotPinSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    email = serializer.validated_data['email']
+    user = User.objects.get(email=email)
+
+    pin_token = PinResetToken.create_for_user(user)
+
+    reset_url = f"{settings.FRONTEND_URL}/reset-pin?token={pin_token.token}"
+
+    subject = 'MKUSD Treasury - PIN Reset Request'
+    message = render_to_string('accounts/emails/pin_reset_email.txt', {
+        'user': user,
+        'reset_url': reset_url,
+    })
+
+    try:
+        send_mail(
+            subject=subject,
+            message=message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user.email],
+            fail_silently=False,
+        )
+    except Exception as e:
+        return Response(
+            {'detail': 'Failed to send PIN reset email.', 'error': str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+    return Response(
+        {'detail': 'PIN reset email sent successfully.', 'email': user.email},
+        status=status.HTTP_200_OK,
+    )
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def reset_pin_view(request):
+    serializer = ResetPinSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    token = serializer.validated_data['token']
+    new_pin = serializer.validated_data['new_pin']
+
+    token_obj = PinResetToken.objects.filter(token=token, used=False).first()
+    if not token_obj:
+        return Response(
+            {'detail': 'Invalid or expired reset token.'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if not token_obj.is_valid():
+        return Response(
+            {'detail': 'PIN reset token has expired or already been used.'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    user = token_obj.user
+    user.pin = make_password(new_pin)
+    user.pin_setup_complete = True
+    user.save(update_fields=['pin', 'pin_setup_complete'])
+
+    token_obj.used = True
+    token_obj.save(update_fields=['used'])
+
+    return Response(
+        {'detail': 'PIN reset successful.'},
         status=status.HTTP_200_OK,
     )

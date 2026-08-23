@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from accounts.models import User, PasswordResetToken
+from accounts.models import User, PasswordResetToken, PinResetToken
 from accounts.utils import (
     hash_pin,
     verify_pin,
@@ -150,6 +150,21 @@ class ChangePasswordSerializer(serializers.Serializer):
         return value
 
 
+class ChangePinSerializer(serializers.Serializer):
+    old_pin = serializers.CharField(write_only=True, min_length=4, max_length=6)
+    new_pin = serializers.CharField(write_only=True, min_length=4, max_length=6)
+
+    def validate_old_pin(self, value):
+        if not validate_pin_format(value):
+            raise serializers.ValidationError('Old PIN must be 4-6 digits.')
+        return value
+
+    def validate_new_pin(self, value):
+        if not validate_pin_format(value):
+            raise serializers.ValidationError('New PIN must be 4-6 digits.')
+        return value
+
+
 class ForgotPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
@@ -166,4 +181,24 @@ class ResetPasswordSerializer(serializers.Serializer):
 
     def validate_new_password(self, value):
         validate_password(value)
+        return value
+
+
+class ForgotPinSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        value = value.lower().strip()
+        if not User.objects.filter(email=value).exists():
+            raise serializers.ValidationError('No user found with this email address.')
+        return value
+
+
+class ResetPinSerializer(serializers.Serializer):
+    token = serializers.CharField()
+    new_pin = serializers.CharField(write_only=True, min_length=4, max_length=6)
+
+    def validate_new_pin(self, value):
+        if not validate_pin_format(value):
+            raise serializers.ValidationError('PIN must be 4-6 digits.')
         return value
