@@ -47,7 +47,10 @@ def login_view(request):
     if password:
         serializer = EmailLoginSerializer(data={'email': email, 'password': password})
     elif pin:
-        if access_token:
+        header_token = _get_bearer_token(request)
+        if header_token:
+            serializer = PinLoginSerializer(data={'access': header_token, 'pin': pin})
+        elif access_token:
             serializer = PinLoginSerializer(data={'access': access_token, 'pin': pin})
         else:
             serializer = PinLoginSerializer(data={'email': email, 'pin': pin})
@@ -72,6 +75,13 @@ def login_view(request):
         'user': UserSerializer(user).data,
         'pin_setup_required': not user.pin_setup_complete,
     }, status=status.HTTP_200_OK)
+
+
+def _get_bearer_token(request):
+    auth_header = request.headers.get('Authorization', '')
+    if auth_header.startswith('Bearer '):
+        return auth_header[7:].strip()
+    return None
 
 
 @api_view(['GET'])
@@ -178,11 +188,9 @@ def logout_view(request):
 
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def verify_pin_view(request):
     pin = request.data.get('pin')
-    access_token = request.data.get('access')
-    email = request.data.get('email', '').lower().strip()
 
     if not pin:
         return Response(
@@ -190,31 +198,7 @@ def verify_pin_view(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    user = None
-
-    if access_token:
-        try:
-            token = AccessToken(access_token)
-            user_id = token['user_id']
-            user = User.objects.get(id=user_id)
-        except (TokenError, InvalidToken, User.DoesNotExist):
-            return Response(
-                {'detail': 'Invalid or expired access token.'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-    elif email:
-        try:
-            user = User.objects.get(email=email)
-        except User.DoesNotExist:
-            return Response(
-                {'detail': 'Invalid credentials.'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-    else:
-        return Response(
-            {'detail': 'Provide either access token or email.'},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+    user = request.user
 
     if is_locked(user):
         seconds = get_lockout_remaining_seconds(user)
