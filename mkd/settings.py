@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'accounts',
+    'donation',
 ]
 
 MIDDLEWARE = [
@@ -113,6 +114,7 @@ CORS_ALLOWED_ORIGINS = [
     'https://mkusda-church-treasury-fronted.vercel.app',
     'http://localhost:5173',
     'http://127.0.0.1:5173',
+     'http://127.0.0.1:5174',
 ]
 CORS_ALLOW_CREDENTIALS = True
 
@@ -125,4 +127,4 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'cascallensteve@gmail.com'
 EMAIL_HOST_PASSWORD = 'xivpyblbpyfpsimf'
-DEFAULT_FROM_EMAIL = 'MKUSD Treasury <cascallensteve@gmail.com>'
+DEFAULT_FROM_EMAIL = 'MKUSDA Treasury <cascallensteve@gmail.com>'
