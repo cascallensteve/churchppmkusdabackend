@@ -1,0 +1,247 @@
+
+
+## Authentication
+
+All donation endpoints require **admin authentication**. Include the JWT access token in the request header:
+
+```
+Authorization: Bearer <access_token>
+```
+
+Only users with `is_staff=True` can access these endpoints.
+
+---
+
+## Endpoints
+
+### List Donation Types
+
+#### `GET /api/donation/donation-types/`
+
+Retrieve all donation types.
+
+**Success Response (200 OK):**
+
+```json
+{
+  "count": 2,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "id": 1,
+      "name": "Tithes",
+      "description": "Regular tithe contributions",
+      "created_by": 1,
+      "created_by_email": "cascallensteve@gmail.com",
+      "created_by_name": "MKUSDA Treasury",
+      "created_at": "2026-08-24T12:00:00Z"
+    },
+    {
+      "id": 2,
+      "name": "Offerings",
+      "description": "General offerings",
+      "created_by": 1,
+      "created_by_email": "cascallensteve@gmail.com",
+      "created_by_name": "MKUSDA Treasury",
+      "created_at": "2026-08-24T12:05:00Z"
+    }
+  ]
+}
+```
+
+---
+
+### Create Donation Type
+
+#### `POST /api/donation/donation-types/`
+
+Create a new donation type.
+
+**Request:**
+
+```json
+{
+  "name": "Tithes",
+  "description": "Regular tithe contributions (10% of income)"
+}
+```
+
+**Success Response (201 Created):**
+
+```json
+{
+  "id": 1,
+  "name": "Tithes",
+  "description": "Regular tithe contributions (10% of income)",
+  "created_by": 1,
+  "created_by_email": "cascallensteve@gmail.com",
+  "created_by_name": "MKUSDA Treasury",
+  "created_at": "2026-08-24T12:00:00Z"
+}
+```
+
+---
+
+### Retrieve Donation Type
+
+#### `GET /api/donation/donation-types/{id}/`
+
+Retrieve a specific donation type by ID.
+
+**Success Response (200 OK):**
+
+```json
+{
+  "id": 1,
+  "name": "Tithes",
+  "description": "Regular tithe contributions (10% of income)",
+  "created_by": 1,
+  "created_by_email": "cascallensteve@gmail.com",
+  "created_by_name": "MKUSDA Treasury",
+  "created_at": "2026-08-24T12:00:00Z"
+}
+```
+
+---
+
+### Update Donation Type
+
+#### `PUT /api/donation/donation-types/{id}/`
+
+Update a donation type (full update).
+
+**Request:**
+
+```json
+{
+  "name": "Tithes",
+  "description": "Updated description for tithes"
+}
+```
+
+**Success Response (200 OK):**
+
+```json
+{
+  "id": 1,
+  "name": "Tithes",
+  "description": "Updated description for tithes",
+  "created_by": 1,
+  "created_by_email": "cascallensteve@gmail.com",
+  "created_by_name": "MKUSDA Treasury",
+  "created_at": "2026-08-24T12:00:00Z"
+}
+```
+
+---
+
+#### `PATCH /api/donation/donation-types/{id}/`
+
+Partially update a donation type.
+
+**Request:**
+
+```json
+{
+  "description": "Partially updated description"
+}
+```
+
+**Success Response (200 OK):**
+
+```json
+{
+  "id": 1,
+  "name": "Tithes",
+  "description": "Partially updated description",
+  "created_by": 1,
+  "created_by_email": "cascallensteve@gmail.com",
+  "created_by_name": "MKUSDA Treasury",
+  "created_at": "2026-08-24T12:00:00Z"
+}
+```
+
+---
+
+### Delete Donation Type
+
+#### `DELETE /api/donation/donation-types/{id}/`
+
+Delete a donation type.
+
+**Success Response (204 No Content):**
+
+```
+No content
+```
+
+---
+
+## Data Model
+
+### DonationType
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | Integer | Primary key |
+| `name` | String (255) | Name of the donation type |
+| `description` | Text | Profile pitch / description (optional) |
+| `created_by` | ForeignKey | Admin user who created the type |
+| `created_at` | DateTime | Timestamp of creation |
+
+---
+
+## Error Responses
+
+### 401 Unauthorized
+
+```json
+{
+  "detail": "Authentication credentials were not provided."
+}
+```
+
+### 403 Forbidden
+
+```json
+{
+  "detail": "You do not have permission to perform this action."
+}
+```
+
+### 400 Bad Request
+
+```json
+{
+  "name": [
+    "This field is required."
+  ]
+}
+```
+
+### 404 Not Found
+
+```json
+{
+  "detail": "Not found."
+}
+```
+
+---
+
+## Admin Panel
+
+Donation types can also be managed via the Django admin panel:
+
+```
+/admin/
+```
+
+- **List view** displays: Name, Created By (email), Created At
+- **Search** by name and description
+- **Filter** by creation date
+
+---
+
+*Generated on 2026-08-24*
