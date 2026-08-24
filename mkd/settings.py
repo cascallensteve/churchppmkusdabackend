@@ -114,7 +114,8 @@ CORS_ALLOWED_ORIGINS = [
     'https://mkusda-church-treasury-fronted.vercel.app',
     'http://localhost:5173',
     'http://127.0.0.1:5173',
-     'http://127.0.0.1:5174',
+    'http://localhost:5174',
+    'http://127.0.0.1:5174',
 ]
 CORS_ALLOW_CREDENTIALS = True
 
