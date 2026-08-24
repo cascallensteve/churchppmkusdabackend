@@ -13,6 +13,8 @@ from accounts.utils import (
     get_remaining_attempts,
     get_lockout_remaining_seconds,
 )
+from rest_framework_simplejwt.tokens import AccessToken
+from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -84,24 +86,27 @@ class EmailLoginSerializer(serializers.Serializer):
 
 
 class PinLoginSerializer(serializers.Serializer):
-    email = serializers.EmailField(required=False, allow_blank=True)
+    access = serializers.CharField(required=False, allow_blank=True)
     pin = serializers.CharField(write_only=True)
 
     def validate(self, attrs):
-        email = attrs.get('email', '').lower().strip()
+        access_token = attrs.get('access', '').strip()
         pin = attrs.get('pin', '')
 
         if not validate_pin_format(pin):
             raise serializers.ValidationError({'pin': 'PIN must be 4-6 digits.'})
 
         user = None
-        if email:
+
+        if access_token:
             try:
-                user = User.objects.get(email=email)
-            except User.DoesNotExist:
-                raise serializers.ValidationError({'email': 'Invalid credentials.'})
+                token = AccessToken(access_token)
+                user_id = token['user_id']
+                user = User.objects.get(id=user_id)
+            except (TokenError, InvalidToken, User.DoesNotExist):
+                raise serializers.ValidationError({'access': 'Invalid or expired access token.'})
         else:
-            raise serializers.ValidationError({'email': 'Email is required for PIN login.'})
+            raise serializers.ValidationError({'access': 'Access token is required for PIN login.'})
 
         if is_locked(user):
             seconds = get_lockout_remaining_seconds(user)

@@ -11,8 +11,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
+from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 from accounts.serializers import (
     EmailLoginSerializer,
     PinLoginSerializer,
@@ -42,11 +42,15 @@ def login_view(request):
     email = request.data.get('email', '').lower().strip()
     password = request.data.get('password')
     pin = request.data.get('pin')
+    access_token = request.data.get('access', '').strip()
 
     if password:
         serializer = EmailLoginSerializer(data={'email': email, 'password': password})
     elif pin:
-        serializer = PinLoginSerializer(data={'email': email, 'pin': pin})
+        if access_token:
+            serializer = PinLoginSerializer(data={'access': access_token, 'pin': pin})
+        else:
+            serializer = PinLoginSerializer(data={'email': email, 'pin': pin})
     else:
         return Response(
             {'detail': 'Provide either password or pin.'},
@@ -176,20 +180,39 @@ def logout_view(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def verify_pin_view(request):
-    email = request.data.get('email', '').lower().strip()
     pin = request.data.get('pin')
+    access_token = request.data.get('access')
+    email = request.data.get('email', '').lower().strip()
 
-    if not email or not pin:
+    if not pin:
         return Response(
-            {'detail': 'Email and PIN are required.'},
+            {'detail': 'PIN is required.'},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    try:
-        user = User.objects.get(email=email)
-    except User.DoesNotExist:
+    user = None
+
+    if access_token:
+        try:
+            token = AccessToken(access_token)
+            user_id = token['user_id']
+            user = User.objects.get(id=user_id)
+        except (TokenError, InvalidToken, User.DoesNotExist):
+            return Response(
+                {'detail': 'Invalid or expired access token.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+    elif email:
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response(
+                {'detail': 'Invalid credentials.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+    else:
         return Response(
-            {'detail': 'Invalid credentials.'},
+            {'detail': 'Provide either access token or email.'},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
