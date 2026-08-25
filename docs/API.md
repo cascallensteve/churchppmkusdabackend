@@ -1,3 +1,131 @@
+# Donation API Documentation
+
+Base URL: `/api/donation/`
+
+All endpoints are prefixed with `/api/donation/`.
+
+---
+
+## 1. List Donation Types (Public)
+
+List all available donation types.
+
+### Endpoint
+
+- **URL:** `/api/donation/public/`
+- **Method:** `GET`
+- **Auth:** Public
+
+### Responses
+
+**200 OK**
+
+```json
+[
+    {
+        "id": 1,
+        "name": "Tithe",
+        "description": "General tithe donation",
+        "created_by": 1,
+        "created_by_email": "admin@example.com",
+        "created_by_name": "Admin User",
+        "created_at": "2026-08-25T19:00:00Z"
+    }
+]
+```
+
+---
+
+## 2. Create Public Donation
+
+Create a donation transaction publicly. No authentication required.
+
+### Endpoint
+
+- **URL:** `/api/donation/public/donate/`
+- **Method:** `POST`
+- **Auth:** Public
+
+### Payload
+
+```json
+{
+    "donation_type_id": 1,
+    "donor_name": "John Doe",
+    "donor_email": "john@example.com",
+    "phone_number": "254712345678",
+    "amount": 100.00
+}
+```
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `donation_type_id` | integer | Yes | ID of the `DonationType` to donate to |
+| `donor_name` | string | Yes | Full name of the donor |
+| `donor_email` | string | Yes | Email address of the donor |
+| `phone_number` | string | Yes | M-Pesa registered phone number |
+| `amount` | decimal | Yes | Amount to donate |
+
+### Responses
+
+**201 Created**
+
+```json
+{
+    "id": 1,
+    "donation_type": 1,
+    "donation_type_name": "Tithe",
+    "user": null,
+    "user_email": null,
+    "phone_number": "254712345678",
+    "amount": "100.00",
+    "donor_name": "John Doe",
+    "donor_email": "john@example.com",
+    "status": "PENDING",
+    "mpesa_receipt": null,
+    "merchant_request_id": null,
+    "checkout_request_id": null,
+    "transaction_desc": "Public donation for Tithe",
+    "created_at": "2026-08-26T00:00:00Z",
+    "updated_at": "2026-08-26T00:00:00Z"
+}
+```
+
+**400 Bad Request**
+
+```json
+{
+    "donation_type_id": ["This field is required."],
+    "donor_name": ["This field is required."]
+}
+```
+
+**404 Not Found**
+
+```json
+{
+    "detail": "Donation type not found."
+}
+```
+
+---
+
+## 3. Admin Donation Types
+
+Admin-only endpoints to manage donation types.
+
+### Endpoints
+
+- **URL:** `/api/donation/donation-types/`
+- **Method:** `GET`, `POST`
+- **Auth:** Admin user
+
+- **URL:** `/api/donation/donation-types/{id}/`
+- **Method:** `GET`, `PUT`, `PATCH`, `DELETE`
+- **Auth:** Admin user
+
+---
+
 # Payments API Documentation
 
 Base URL: `/api/payments/`
@@ -22,7 +150,9 @@ Initiates an M-Pesa STK Push payment for a specific donation type.
 {
     "donation_type_id": 1,
     "phone_number": "254712345678",
-    "amount": 100.00
+    "amount": 100.00,
+    "donor_name": "John Doe",
+    "donor_email": "john@example.com"
 }
 ```
 
@@ -31,6 +161,8 @@ Initiates an M-Pesa STK Push payment for a specific donation type.
 | `donation_type_id` | integer | Yes | ID of the `DonationType` to pay for |
 | `phone_number` | string | Yes | M-Pesa registered phone number |
 | `amount` | decimal | Yes | Amount to donate |
+| `donor_name` | string | No | Name of the donor |
+| `donor_email` | string | No | Email of the donor |
 
 ### Responses
 
@@ -48,6 +180,8 @@ Initiates an M-Pesa STK Push payment for a specific donation type.
         "user_email": null,
         "phone_number": "254712345678",
         "amount": "100.00",
+        "donor_name": "John Doe",
+        "donor_email": "john@example.com",
         "status": "PENDING",
         "mpesa_receipt": null,
         "merchant_request_id": "12345-1",
@@ -201,6 +335,8 @@ Example: `/api/payments/status/?checkout_request_id=ws_CO_123456789`
     "user_email": null,
     "phone_number": "254712345678",
     "amount": "100.00",
+    "donor_name": "John Doe",
+    "donor_email": "john@example.com",
     "status": "SUCCESS",
     "mpesa_receipt": "ABC123",
     "merchant_request_id": "12345-1",
@@ -257,6 +393,8 @@ None. This is a GET endpoint.
         "user_email": null,
         "phone_number": "254712345678",
         "amount": "100.00",
+        "donor_name": "John Doe",
+        "donor_email": "john@example.com",
         "status": "SUCCESS",
         "mpesa_receipt": "ABC123",
         "merchant_request_id": "12345-1",
@@ -313,6 +451,8 @@ None. This is a GET endpoint.
     "user_email": null,
     "phone_number": "254712345678",
     "amount": "100.00",
+    "donor_name": "John Doe",
+    "donor_email": "john@example.com",
     "status": "SUCCESS",
     "mpesa_receipt": "ABC123",
     "merchant_request_id": "12345-1",
@@ -346,24 +486,3 @@ None. This is a GET endpoint.
     "detail": "Not found."
 }
 ```
-
----
-
-## Transaction Model
-
-| Field | Type | Description |
-|---|---|---|
-| `id` | integer | Primary key |
-| `donation_type` | integer | Foreign key to `DonationType` |
-| `donation_type_name` | string | Read-only. Name of the donation type |
-| `user` | integer / null | Foreign key to `accounts.User` (nullable) |
-| `user_email` | string / null | Read-only. Email of the user who made the donation |
-| `phone_number` | string | M-Pesa phone number used for payment |
-| `amount` | decimal | Amount donated (max 10 digits, 2 decimal places) |
-| `status` | string | `PENDING`, `SUCCESS`, `FAILED`, or `CANCELLED` |
-| `mpesa_receipt` | string / null | M-Pesa receipt number after successful payment |
-| `merchant_request_id` | string / null | M-Pesa merchant request ID |
-| `checkout_request_id` | string / null | M-Pesa checkout request ID |
-| `transaction_desc` | string / null | Description of the transaction |
-| `created_at` | datetime | Timestamp when transaction was created |
-| `updated_at` | datetime | Timestamp when transaction was last updated |

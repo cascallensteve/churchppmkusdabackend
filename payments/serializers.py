@@ -10,8 +10,8 @@ class TransactionSerializer(serializers.ModelSerializer):
         model = Transaction
         fields = [
             'id', 'donation_type', 'donation_type_name', 'user', 'user_email',
-            'phone_number', 'amount', 'status', 'mpesa_receipt',
-            'merchant_request_id', 'checkout_request_id', 'transaction_desc',
-            'created_at', 'updated_at'
+            'phone_number', 'amount', 'donor_name', 'donor_email',
+            'status', 'mpesa_receipt', 'merchant_request_id', 'checkout_request_id',
+            'transaction_desc', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'status', 'mpesa_receipt', 'merchant_request_id', 'checkout_request_id', 'created_at', 'updated_at']

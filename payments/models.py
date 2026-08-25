@@ -20,6 +20,8 @@ class Transaction(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='transactions')
     phone_number = models.CharField(max_length=20)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
+    donor_name = models.CharField(max_length=255, blank=True, null=True)
+    donor_email = models.EmailField(blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=PENDING)
     mpesa_receipt = models.CharField(max_length=100, blank=True, null=True)
     merchant_request_id = models.CharField(max_length=100, blank=True, null=True)

@@ -33,6 +33,8 @@ def initiate_payment_view(request):
     donation_type_id = request.data.get('donation_type_id')
     phone_number = request.data.get('phone_number')
     amount = request.data.get('amount')
+    donor_name = request.data.get('donor_name')
+    donor_email = request.data.get('donor_email')
 
     if not donation_type_id or not phone_number or not amount:
         return Response(
@@ -54,6 +56,8 @@ def initiate_payment_view(request):
             donation_type=donation_type,
             phone_number=phone_number,
             amount=amount,
+            donor_name=donor_name,
+            donor_email=donor_email,
             transaction_desc=f"Payment for {donation_type.name}",
         )
     except Exception as e:
