@@ -2,23 +2,56 @@
 
 ## Authentication
 
-All donation endpoints require **admin authentication**. Include the JWT access token in the request header:
+All donation endpoints require **admin authentication** unless specified otherwise. Include the JWT access token in the request header:
 
 ```
 Authorization: Bearer <access_token>
 ```
 
-Only users with `is_staff=True` can access these endpoints.
+Only users with `is_staff=True` can access admin endpoints.
 
 ---
 
 ## Endpoints
 
+### Public Donation Types
+
+#### `GET /api/donation/public/`
+
+Retrieve all donation types (no authentication required).
+
+**Success Response (200 OK):**
+
+```json
+[
+  {
+    "id": 1,
+    "name": "Tithes",
+    "description": "Regular tithe contributions",
+    "created_by": 1,
+    "created_by_email": "cascallensteve@gmail.com",
+    "created_by_name": "MKUSDA Treasury",
+    "created_at": "2026-08-24T12:00:00Z"
+  },
+  {
+    "id": 2,
+    "name": "Offerings",
+    "description": "General offerings",
+    "created_by": 1,
+    "created_by_email": "cascallensteve@gmail.com",
+    "created_by_name": "MKUSDA Treasury",
+    "created_at": "2026-08-24T12:05:00Z"
+  }
+]
+```
+
+---
+
 ### List Donation Types
 
 #### `GET /api/donation/donation-types/`
 
-Retrieve all donation types.
+Retrieve all donation types (admin only).
 
 **Success Response (200 OK):**
 
@@ -230,18 +263,103 @@ No content
 
 ---
 
+## M-Pesa Payments
+
+M-Pesa Daraja integration for processing donations via STK Push.
+
+### Environment Variables
+
+```bash
+MPESA_CONSUMER_KEY=your_consumer_key
+MPESA_CONSUMER_SECRET=your_consumer_secret
+MPESA_SHORTCODE=174379
+MPESA_PASSKEY=your_passkey
+MPESA_ENVIRONMENT=sandbox
+MPESA_CALLBACK_URL=https://your-domain.com/api/payments/callback/
+```
+
+### Payment Flow
+
+1. Frontend fetches public donation types from `GET /api/donation/public/`
+2. User selects donation type and enters phone number + amount
+3. Frontend calls `POST /api/payments/initiate/`
+4. M-Pesa sends validation request to `POST /api/payments/validation/`
+5. M-Pesa sends confirmation to `POST /api/payments/callback/`
+6. Frontend polls `GET /api/payments/status/?checkout_request_id=...` for status
+
+### Initiate Payment
+
+#### `POST /api/payments/initiate/`
+
+Start M-Pesa STK Push payment.
+
+**Request:**
+
+```json
+{
+  "donation_type_id": 1,
+  "phone_number": "254700000000",
+  "amount": 100
+}
+```
+
+**Success Response (200 OK):**
+
+```json
+{
+  "message": "Payment initiated successfully. Please check your phone.",
+  "checkout_request_id": "ws_CO_123456789",
+  "transaction": {
+    "id": 1,
+    "donation_type": 1,
+    "donation_type_name": "Tithes",
+    "phone_number": "254700000000",
+    "amount": "100.00",
+    "status": "PENDING",
+    "created_at": "2026-08-24T13:00:00Z"
+  }
+}
+```
+
+### Check Payment Status
+
+#### `GET /api/payments/status/?checkout_request_id=...`
+
+Check the status of a payment.
+
+**Success Response (200 OK):**
+
+```json
+{
+  "id": 1,
+  "donation_type": 1,
+  "phone_number": "254700000000",
+  "amount": "100.00",
+  "status": "SUCCESS",
+  "mpesa_receipt": "MBI123456",
+  "created_at": "2026-08-24T13:00:00Z"
+}
+```
+
+### Admin Transactions
+
+#### `GET /api/payments/transactions/`
+
+List all transactions (admin only).
+
+#### `GET /api/payments/transactions/{id}/`
+
+Retrieve specific transaction (admin only).
+
+---
+
 ## Admin Panel
 
-Donation types can also be managed via the Django admin panel:
+Donation types and transactions can be managed via the Django admin panel:
 
 ```
 /admin/
 ```
 
-- **List view** displays: Name, Created By (email), Created At
-- **Search** by name and description
-- **Filter** by creation date
-
----
-
-*Generated on 2026-08-24*
+- **Donation Types**: List, create, edit donation categories
+- **Transactions**: View all M-Pesa payments with status, receipt numbers, and timestamps
