@@ -8,6 +8,8 @@ class DonationType(models.Model):
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='donation_types')
     created_at = models.DateTimeField(auto_now_add=True)
 
+
+# this files is well updated 
     class Meta:
         ordering = ['-created_at']
 
