@@ -113,25 +113,25 @@ def mpesa_callback_view(request):
     result_code = stk_callback.get('ResultCode')
     result_desc = stk_callback.get('ResultDesc')
 
-    try:
-        transaction = Transaction.objects.get(checkout_request_id=checkout_request_id)
-    except Transaction.DoesNotExist:
+    transactions = Transaction.objects.filter(checkout_request_id=checkout_request_id)
+    if not transactions.exists():
         return Response({"ResultCode": 0, "ResultDesc": "Accepted"}, status=status.HTTP_200_OK)
 
-    if result_code == 0:
-        metadata = stk_callback.get('CallbackMetadata', {})
-        items = metadata.get('Item', [])
-        mpesa_receipt = None
-        for item in items:
-            if item.get('Name') == 'MpesaReceiptNumber':
-                mpesa_receipt = item.get('Value')
+    for transaction in transactions:
+        if result_code == 0:
+            metadata = stk_callback.get('CallbackMetadata', {})
+            items = metadata.get('Item', [])
+            mpesa_receipt = None
+            for item in items:
+                if item.get('Name') == 'MpesaReceiptNumber':
+                    mpesa_receipt = item.get('Value')
 
-        transaction.status = Transaction.SUCCESS
-        transaction.mpesa_receipt = mpesa_receipt
-        transaction.save(update_fields=['status', 'mpesa_receipt'])
-    else:
-        transaction.status = Transaction.FAILED
-        transaction.save(update_fields=['status'])
+            transaction.status = Transaction.SUCCESS
+            transaction.mpesa_receipt = mpesa_receipt
+            transaction.save(update_fields=['status', 'mpesa_receipt'])
+        else:
+            transaction.status = Transaction.FAILED
+            transaction.save(update_fields=['status'])
 
     return Response({"ResultCode": 0, "ResultDesc": "Accepted"}, status=status.HTTP_200_OK)
 
@@ -148,11 +148,16 @@ def payment_status_view(request):
         )
 
     try:
-        transaction = Transaction.objects.get(checkout_request_id=checkout_request_id)
+        transaction = Transaction.objects.filter(checkout_request_id=checkout_request_id).order_by('-created_at').first()
+        if not transaction:
+            return Response(
+                {'detail': 'Transaction not found.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
         serializer = TransactionSerializer(transaction)
         return Response(serializer.data, status=status.HTTP_200_OK)
-    except Transaction.DoesNotExist:
+    except Exception as e:
         return Response(
-            {'detail': 'Transaction not found.'},
-            status=status.HTTP_404_NOT_FOUND,
+            {'detail': f'Error fetching transaction: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )

@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from datetime import timedelta
 from urllib.parse import urlparse
+from decouple import config
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -71,7 +72,7 @@ TEMPLATES = [
         },
     },
 ]
-0000
+
 WSGI_APPLICATION = 'mkd.wsgi.application'
 ASGI_APPLICATION = 'mkd.asgi.application'
 
@@ -131,9 +132,9 @@ EMAIL_HOST_USER = 'cascallensteve@gmail.com'
 EMAIL_HOST_PASSWORD = 'xivpyblbpyfpsimf'
 DEFAULT_FROM_EMAIL = 'MKUSDA Treasury <cascallensteve@gmail.com>'
 
-MPESA_CONSUMER_KEY = os.getenv('MPESA_CONSUMER_KEY', '')
-MPESA_CONSUMER_SECRET = os.getenv('MPESA_CONSUMER_SECRET', '')
-MPESA_SHORTCODE = os.getenv('MPESA_SHORTCODE', '174379')
-MPESA_PASSKEY = os.getenv('MPESA_PASSKEY', '')
-MPESA_ENVIRONMENT = os.getenv('MPESA_ENVIRONMENT', 'sandbox')
-MPESA_CALLBACK_URL = os.getenv('MPESA_CALLBACK_URL', 'http://localhost:8000/api/payments/callback/')
+MPESA_CONSUMER_KEY = config('MPESA_CONSUMER_KEY', default='')
+MPESA_CONSUMER_SECRET = config('MPESA_CONSUMER_SECRET', default='')
+MPESA_SHORTCODE = config('MPESA_SHORTCODE', default='174379')
+MPESA_PASSKEY = config('MPESA_PASSKEY', default='')
+MPESA_ENVIRONMENT = config('MPESA_ENVIRONMENT', default='sandbox')
+MPESA_CALLBACK_URL = config('MPESA_CALLBACK_URL', default='http://localhost:8000/api/payments/callback/')

@@ -19,7 +19,10 @@ class MpesaService:
     def get_access_token(self):
         url = f"{self.base_url}/oauth/v1/generate?grant_type=client_credentials"
         response = requests.get(url, auth=(self.consumer_key, self.consumer_secret))
-        response.raise_for_status()
+        if response.status_code != 200:
+            raise Exception(
+                f"M-Pesa OAuth failed ({response.status_code}): {response.text}"
+            )
         return response.json().get('access_token')
 
     def initiate_stk_push(self, phone_number, amount, account_ref, transaction_desc):
