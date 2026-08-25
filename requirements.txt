@@ -5,3 +5,4 @@ django-cors-headers>=4.4,<4.5
 django-filter>=24.3,<25.0
 python-decouple>=3.8,<3.9
 psycopg2-binary>=2.9,<3.0
+requests>=2.32,<2.33
