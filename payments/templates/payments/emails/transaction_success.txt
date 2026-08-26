@@ -1,26 +1,29 @@
 Dear {{ donor_name }},
 
-Thank you for your generous donation to MKUSD Church Treasury. Your payment has been successfully processed.
+Thank you for your generous donation to MKUSDA Church. Your payment has been successfully processed.
 
 PAYMENT RECEIPT
 --------------
 
-Transaction ID:       #{{ transaction.id }}
-Donation Type:        {{ transaction.donation_type.name }}
-Donor Name:           {{ donor_name }}
-Donor Email:          {{ donor_email }}
-Phone Number:         {{ transaction.phone_number }}
-Amount Paid:          KSh {{ transaction.amount }}
-M-Pesa Receipt:       {{ mpesa_receipt|default:"Pending" }}
-Checkout Request ID:  {{ transaction.checkout_request_id|default:"-" }}
-Payment Date:         {{ transaction.updated_at|date:"F j, Y" }}
-Payment Time:         {{ transaction.updated_at|date:"H:i" }} (UTC)
-Status:               {{ transaction.status }}
+Receipt Number:        #{{ transaction.id }}
+Date:                  {{ transaction.updated_at|date:"F j, Y" }}
+Member Name:           {{ donor_name }}
+Email Address:         {{ donor_email }}
+Phone Number:          {{ transaction.phone_number }}
+Donation Type:         {{ transaction.donation_type.name }}
+Payment Method:        {{ payment_method }}
+{% if transaction.transaction_desc %}
+Notes / Remarks:       {{ transaction.transaction_desc }}
+{% endif %}
 
-We appreciate your support. May God bless you abundantly.
+AMOUNT PAID:           KSh {{ transaction.amount }}
+
+Thank you for your generous giving.
 
 If you have any questions, please contact the church treasury office.
 
 ---
-MKUSD Church Treasury System
+MKUSDA Church Treasury System
+Mount Kenya University, Thika
+© {% now "Y" %} MKUSDA Church. All rights reserved.
 This is an automated receipt. Please do not reply to this email.

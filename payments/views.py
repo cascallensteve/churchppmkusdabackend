@@ -257,6 +257,7 @@ def mpesa_callback_view(request):
                         'donor_name': transaction.donor_name or 'Donor',
                         'donor_email': transaction.donor_email,
                         'mpesa_receipt': mpesa_receipt,
+                        'payment_method': transaction.get_payment_method_display(),
                     }
                     subject = 'Payment Receipt - MKUSD Church Treasury'
                     from_email = settings.DEFAULT_FROM_EMAIL
@@ -340,6 +341,7 @@ def resend_receipt_view(request):
             'donor_name': transaction.donor_name or 'Donor',
             'donor_email': transaction.donor_email,
             'mpesa_receipt': transaction.mpesa_receipt,
+            'payment_method': transaction.get_payment_method_display(),
         }
         subject = 'Payment Receipt - MKUSD Church Treasury'
         from_email = settings.DEFAULT_FROM_EMAIL
@@ -381,6 +383,7 @@ def admin_cash_transaction_view(request):
                 'donor_name': transaction.donor_name or 'Donor',
                 'donor_email': transaction.donor_email,
                 'mpesa_receipt': None,
+                'payment_method': transaction.get_payment_method_display(),
             }
             subject = 'Payment Receipt - MKUSD Church Treasury'
             from_email = settings.DEFAULT_FROM_EMAIL
