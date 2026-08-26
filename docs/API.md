@@ -436,3 +436,101 @@ None. This is a GET endpoint.
     "detail": "You do not have permission to perform this action."
 }
 ```
+
+---
+
+## 8. Manual Donation Entry (Admin)
+
+Create a manual donation entry directly for a donation type account. Admin-only.
+
+### Endpoint
+
+- **URL:** `/api/payments/manual-donation/`
+- **Method:** `POST`
+- **Auth:** Admin user
+
+### Payload
+
+```json
+{
+    "donation_type": 1,
+    "phone_number": "254712345678",
+    "amount": 1000.00,
+    "donor_name": "John Doe",
+    "donor_email": "john@example.com",
+    "payment_method": "CASH",
+    "transaction_desc": "Sunday morning offering"
+}
+```
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `donation_type` | integer | Yes | ID of the `DonationType` account |
+| `phone_number` | string | Yes | Phone number of the donor |
+| `amount` | decimal | Yes | Amount donated |
+| `donor_name` | string | No | Name of the donor |
+| `donor_email` | string | No | Email of the donor |
+| `payment_method` | string | No | Payment method: `MPESA` or `CASH` (default: `MPESA`) |
+| `transaction_desc` | string | No | Optional description or notes |
+
+### Responses
+
+**201 Created**
+
+```json
+{
+    "detail": "Manual donation entry created successfully.",
+    "transaction": {
+        "id": 1,
+        "donation_type": 1,
+        "donation_type_name": "Tithe",
+        "user": null,
+        "user_email": null,
+        "phone_number": "254712345678",
+        "amount": "1000.00",
+        "donor_name": "John Doe",
+        "donor_email": "john@example.com",
+        "payment_method": "CASH",
+        "status": "SUCCESS",
+        "mpesa_receipt": null,
+        "merchant_request_id": null,
+        "checkout_request_id": null,
+        "transaction_desc": "Sunday morning offering",
+        "created_at": "2026-08-26T16:30:00Z",
+        "updated_at": "2026-08-26T16:30:00Z"
+    }
+}
+```
+
+**400 Bad Request**
+
+```json
+{
+    "donation_type": ["This field is required."],
+    "amount": ["This field is required."]
+}
+```
+
+**401 Unauthorized**
+
+```json
+{
+    "detail": "Authentication credentials were not provided."
+}
+```
+
+**403 Forbidden**
+
+```json
+{
+    "detail": "You do not have permission to perform this action."
+}
+```
+
+**404 Not Found**
+
+```json
+{
+    "detail": "Donation type not found."
+}
+```
