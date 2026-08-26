@@ -1,3 +1,4 @@
+import logging
 from rest_framework import generics, permissions, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -13,6 +14,8 @@ from donation.models import DonationType
 from .serializers import TransactionSerializer, AdminCashTransactionSerializer, AllocationSerializer
 from .services import MpesaService
 from .pdf_utils import generate_receipt_pdf
+
+logger = logging.getLogger(__name__)
 
 
 mpesa_service = MpesaService()
@@ -268,9 +271,10 @@ def mpesa_callback_view(request):
                     pdf_content = generate_receipt_pdf(transaction, transaction.donor_name, transaction.donor_email, mpesa_receipt)
                     msg.attach(f'receipt_{transaction.id}.pdf', pdf_content, 'application/pdf')
 
-                    msg.send(fail_silently=True)
-                except Exception:
-                    pass
+                    msg.send(fail_silently=False)
+                    logger.info(f"Receipt email sent successfully for transaction {transaction.id} to {transaction.donor_email}")
+                except Exception as e:
+                    logger.error(f"Failed to send receipt email for transaction {transaction.id}: {str(e)}")
         else:
             transaction.status = Transaction.FAILED
             transaction.save(update_fields=['status'])
@@ -391,9 +395,10 @@ def admin_cash_transaction_view(request):
             pdf_content = generate_receipt_pdf(transaction, transaction.donor_name, transaction.donor_email, None)
             msg.attach(f'receipt_{transaction.id}.pdf', pdf_content, 'application/pdf')
 
-            msg.send(fail_silently=True)
-        except Exception:
-            pass
+            msg.send(fail_silently=False)
+            logger.info(f"Cash transaction receipt email sent for transaction {transaction.id} to {transaction.donor_email}")
+        except Exception as e:
+            logger.error(f"Failed to send cash transaction receipt email for transaction {transaction.id}: {str(e)}")
 
     return Response(
         {
