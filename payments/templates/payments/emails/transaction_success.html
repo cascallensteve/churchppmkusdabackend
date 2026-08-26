@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Receipt - MKUSD Treasury</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f8; margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .header { background-color: #1a73e8; color: #ffffff; padding: 30px; text-align: center; }
+        .header h1 { margin: 0; font-size: 24px; font-weight: 600; }
+        .header p { margin: 8px 0 0; opacity: 0.9; font-size: 14px; }
+        .content { padding: 30px; }
+        .greeting { font-size: 16px; color: #333333; margin-bottom: 20px; }
+        .receipt-box { background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 20px; margin: 20px 0; }
+        .receipt-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e9ecef; }
+        .receipt-row:last-child { border-bottom: none; }
+        .receipt-label { color: #6c757d; font-size: 14px; }
+        .receipt-value { color: #212529; font-weight: 600; font-size: 14px; }
+        .amount { font-size: 20px; color: #1a73e8; font-weight: 700; }
+        .success-badge { display: inline-block; background-color: #d4edda; color: #155724; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; margin: 15px 0; }
+        .footer { background-color: #f8f9fa; padding: 20px 30px; text-align: center; color: #6c757d; font-size: 12px; border-top: 1px solid #e9ecef; }
+        .btn { display: inline-block; background-color: #1a73e8; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600; margin: 15px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>MKUSD Church Treasury</h1>
+            <p>Payment Receipt</p>
+        </div>
+
+        <div class="content">
+            <p class="greeting">Dear {{ donor_name }},</p>
+            <p>Thank you for your generous donation. Your payment has been successfully processed.</p>
+
+            <div style="text-align: center;">
+                <span class="success-badge">Payment Successful</span>
+            </div>
+
+            <div class="receipt-box">
+                <div class="receipt-row">
+                    <span class="receipt-label">Transaction ID</span>
+                    <span class="receipt-value">#{{ transaction.id }}</span>
+                </div>
+                <div class="receipt-row">
+                    <span class="receipt-label">Donation Type</span>
+                    <span class="receipt-value">{{ transaction.donation_type.name }}</span>
+                </div>
+                <div class="receipt-row">
+                    <span class="receipt-label">Donor Name</span>
+                    <span class="receipt-value">{{ donor_name }}</span>
+                </div>
+                <div class="receipt-row">
+                    <span class="receipt-label">Donor Email</span>
+                    <span class="receipt-value">{{ donor_email }}</span>
+                </div>
+                <div class="receipt-row">
+                    <span class="receipt-label">Phone Number</span>
+                    <span class="receipt-value">{{ transaction.phone_number }}</span>
+                </div>
+                <div class="receipt-row">
+                    <span class="receipt-label">Amount Paid</span>
+                    <span class="receipt-value amount">KSh {{ transaction.amount }}</span>
+                </div>
+                <div class="receipt-row">
+                    <span class="receipt-label">M-Pesa Receipt</span>
+                    <span class="receipt-value">{{ mpesa_receipt|default:"Pending" }}</span>
+                </div>
+                <div class="receipt-row">
+                    <span class="receipt-label">Checkout Request ID</span>
+                    <span class="receipt-value">{{ transaction.checkout_request_id|default:"-" }}</span>
+                </div>
+                <div class="receipt-row">
+                    <span class="receipt-label">Payment Date</span>
+                    <span class="receipt-value">{{ transaction.updated_at|date:"F j, Y" }}</span>
+                </div>
+                <div class="receipt-row">
+                    <span class="receipt-label">Payment Time</span>
+                    <span class="receipt-value">{{ transaction.updated_at|date:"H:i" }} (UTC)</span>
+                </div>
+            </div>
+
+            <p>We appreciate your support. May God bless you abundantly.</p>
+
+            <p style="color: #6c757d; font-size: 14px;">If you have any questions, please contact the church treasury office.</p>
+        </div>
+
+        <div class="footer">
+            <p>MKUSD Church Treasury System</p>
+            <p>This is an automated receipt. Please do not reply to this email.</p>
+        </div>
+    </div>
+</body>
+</html>
