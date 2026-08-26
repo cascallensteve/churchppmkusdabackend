@@ -31,6 +31,19 @@ class AdminCashTransactionSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 
+class ManualDonationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Transaction
+        fields = [
+            'donation_type', 'phone_number', 'amount',
+            'donor_name', 'donor_email', 'payment_method', 'transaction_desc'
+        ]
+
+    def create(self, validated_data):
+        validated_data['status'] = Transaction.SUCCESS
+        return super().create(validated_data)
+
+
 class AllocationSerializer(serializers.ModelSerializer):
     allocated_by_email = serializers.EmailField(source='allocated_by.email', read_only=True)
     remaining_balance = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)

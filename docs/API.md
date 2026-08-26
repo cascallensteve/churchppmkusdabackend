@@ -349,3 +349,90 @@ None. This is a GET endpoint.
     "detail": "Not found."
 }
 ```
+
+---
+
+## 7. Donation Type Statistics (Admin)
+
+Get aggregated statistics for all donation type accounts. Admin-only.
+
+### Endpoint
+
+- **URL:** `/api/payments/stats/donation-types/`
+- **Method:** `GET`
+- **Auth:** Admin user
+
+### Payload
+
+None. This is a GET endpoint.
+
+### Responses
+
+**200 OK**
+
+```json
+[
+    {
+        "id": 1,
+        "name": "Tithe",
+        "description": "General tithe donation",
+        "current_balance": 15000.00,
+        "total_transactions": 25,
+        "successful_transactions": 22,
+        "pending_transactions": 2,
+        "failed_transactions": 1,
+        "cancelled_transactions": 0,
+        "total_amount_received": 20000.00,
+        "cash_amount": 5000.00,
+        "mpesa_amount": 15000.00,
+        "total_allocated": 5000.00
+    },
+    {
+        "id": 2,
+        "name": "Offering",
+        "description": "Sunday offering",
+        "current_balance": 8500.00,
+        "total_transactions": 18,
+        "successful_transactions": 16,
+        "pending_transactions": 1,
+        "failed_transactions": 1,
+        "cancelled_transactions": 0,
+        "total_amount_received": 12000.00,
+        "cash_amount": 3000.00,
+        "mpesa_amount": 9000.00,
+        "total_allocated": 3500.00
+    }
+]
+```
+
+| Field | Type | Description |
+|---|---|---|
+| `id` | integer | Donation type ID |
+| `name` | string | Donation type name |
+| `description` | string | Donation type description |
+| `current_balance` | decimal | Current available balance |
+| `total_transactions` | integer | Total number of transactions |
+| `successful_transactions` | integer | Number of successful transactions |
+| `pending_transactions` | integer | Number of pending transactions |
+| `failed_transactions` | integer | Number of failed transactions |
+| `cancelled_transactions` | integer | Number of cancelled transactions |
+| `total_amount_received` | decimal | Total amount from successful transactions |
+| `cash_amount` | decimal | Total cash amount received |
+| `mpesa_amount` | decimal | Total M-Pesa amount received |
+| `total_allocated` | decimal | Total amount allocated from this account |
+
+**401 Unauthorized**
+
+```json
+{
+    "detail": "Authentication credentials were not provided."
+}
+```
+
+**403 Forbidden**
+
+```json
+{
+    "detail": "You do not have permission to perform this action."
+}
+```

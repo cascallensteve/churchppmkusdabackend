@@ -11,7 +11,7 @@ from django.template.loader import render_to_string
 from django.db.models import Sum, Count, Q
 from .models import Transaction, Allocation
 from donation.models import DonationType
-from .serializers import TransactionSerializer, AdminCashTransactionSerializer, AllocationSerializer
+from .serializers import TransactionSerializer, AdminCashTransactionSerializer, AllocationSerializer, ManualDonationSerializer
 from .services import MpesaService
 from .pdf_utils import generate_receipt_pdf
 
@@ -406,6 +406,49 @@ def admin_cash_transaction_view(request):
     return Response(
         {
             'detail': 'Cash transaction created successfully.',
+            'transaction': TransactionSerializer(transaction).data,
+        },
+        status=status.HTTP_201_CREATED,
+    )
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAdminUser])
+def manual_donation_view(request):
+    serializer = ManualDonationSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    transaction = serializer.save()
+
+    if transaction.donor_email:
+        try:
+            context = {
+                'transaction': transaction,
+                'donor_name': transaction.donor_name or 'Donor',
+                'donor_email': transaction.donor_email,
+                'mpesa_receipt': None,
+                'payment_method': transaction.get_payment_method_display(),
+            }
+            subject = 'Payment Receipt - MKUSD Church Treasury'
+            from_email = settings.DEFAULT_FROM_EMAIL
+            to_email = [transaction.donor_email]
+
+            text_content = render_to_string('payments/emails/transaction_success.txt', context)
+            html_content = render_to_string('payments/emails/transaction_success.html', context)
+
+            msg = EmailMultiAlternatives(subject, text_content, from_email, to_email)
+            msg.attach_alternative(html_content, "text/html")
+
+            pdf_content = generate_receipt_pdf(transaction, transaction.donor_name, transaction.donor_email, None)
+            msg.attach(f'receipt_{transaction.id}.pdf', pdf_content, 'application/pdf')
+
+            msg.send(fail_silently=False)
+            logger.info(f"Manual donation receipt email sent for transaction {transaction.id} to {transaction.donor_email}")
+        except Exception as e:
+            logger.error(f"Failed to send manual donation receipt email for transaction {transaction.id}: {str(e)}")
+
+    return Response(
+        {
+            'detail': 'Manual donation entry created successfully.',
             'transaction': TransactionSerializer(transaction).data,
         },
         status=status.HTTP_201_CREATED,

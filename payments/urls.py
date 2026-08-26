@@ -12,6 +12,7 @@ urlpatterns = [
     path('transactions/<int:pk>/', views.TransactionDetailView.as_view(), name='transaction-detail'),
     path('transactions/resend-receipt/', views.resend_receipt_view, name='resend-receipt'),
     path('transactions/cash/', views.admin_cash_transaction_view, name='admin-cash-transaction'),
+    path('manual-donation/', views.manual_donation_view, name='manual-donation'),
     path('allocate/', views.allocate_funds_view, name='allocate-funds'),
     path('stats/donation-types/', views.donation_stats_view, name='donation-stats'),
 ]
