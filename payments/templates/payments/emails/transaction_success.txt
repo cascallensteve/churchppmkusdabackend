@@ -1,9 +1,9 @@
-Dear {{ donor_name }},
+Thank you for your contribution.
 
-Thank you for your generous donation to MKUSDA Church. Your payment has been successfully processed.
+Below is your receipt:
 
-PAYMENT RECEIPT
---------------
+RECEIPT
+-------
 
 Receipt Number:        #{{ transaction.id }}
 Date:                  {{ transaction.updated_at|date:"F j, Y" }}
@@ -17,10 +17,6 @@ Notes / Remarks:       {{ transaction.transaction_desc }}
 {% endif %}
 
 AMOUNT PAID:           KSh {{ transaction.amount }}
-
-Thank you for your generous giving.
-
-If you have any questions, please contact the church treasury office.
 
 ---
 MKUSDA Church Treasury System

@@ -13,6 +13,7 @@
         .header h1 { font-size: 22px; font-weight: 700; color: #111827; margin: 0; letter-spacing: -0.3px; }
         .header p { font-size: 12px; color: #6b7280; margin-top: 6px; line-height: 1.5; }
         .content { padding: 0 30px 30px; }
+        .thank-you { text-align: center; font-size: 16px; color: #111827; font-weight: 600; margin: 8px 0 20px; }
         .receipt-card { background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 24px; margin-top: 16px; }
         .receipt-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f3f4f6; }
         .receipt-row:last-child { border-bottom: none; }
@@ -21,7 +22,6 @@
         .amount-box { background: linear-gradient(135deg, #5B21B6 0%, #7C3AED 100%); color: #ffffff; border-radius: 12px; padding: 20px 24px; margin: 20px 0; text-align: center; }
         .amount-label { font-size: 12px; opacity: 0.9; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
         .amount-value { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
-        .success-badge { display: inline-block; background-color: #ECFDF5; color: #065F46; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; margin-bottom: 16px; }
         .footer { text-align: center; padding: 24px 30px 30px; color: #9CA3AF; font-size: 12px; line-height: 1.6; }
         .footer p { margin: 2px 0; }
         .divider { height: 1px; background-color: #f3f4f6; margin: 0 30px; }
@@ -36,9 +36,8 @@
         </div>
 
         <div class="content">
-            <div style="text-align: center;">
-                <span class="success-badge">Payment Successful</span>
-            </div>
+            <p class="thank-you">Thank you for your contribution.</p>
+            <p style="text-align: center; color: #6b7280; font-size: 13px; margin-bottom: 16px;">Below is your receipt:</p>
 
             <div class="receipt-card">
                 <div class="receipt-row">
@@ -80,11 +79,6 @@
             <div class="amount-box">
                 <div class="amount-label">Amount Paid</div>
                 <div class="amount-value">Ksh {{ transaction.amount }}</div>
-            </div>
-
-            <div style="text-align: center; margin-top: 24px;">
-                <p style="color: #374151; font-size: 14px; margin-bottom: 4px;">Thank you for your generous giving</p>
-                <p style="color: #9CA3AF; font-size: 12px;">If you have any questions, please contact the church treasury office.</p>
             </div>
         </div>
 
