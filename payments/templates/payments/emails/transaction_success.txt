@@ -5,8 +5,7 @@ Below is your receipt:
 RECEIPT
 -------
 
-Receipt Number:        #{{ transaction.id }}
-Date:                  {{ transaction.updated_at|date:"F j, Y" }}
+Date:                  {{ transaction.updated_at|date:"F j, Y" }} {{ transaction.updated_at|date:"H:i" }}
 Member Name:           {{ donor_name }}
 Email Address:         {{ donor_email }}
 Phone Number:          {{ transaction.phone_number }}

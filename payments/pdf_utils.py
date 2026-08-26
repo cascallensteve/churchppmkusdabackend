@@ -95,8 +95,7 @@ def generate_receipt_pdf(transaction, donor_name, donor_email, mpesa_receipt):
     )))
 
     data = [
-        ["Receipt Number", f"#{transaction.id}"],
-        ["Date", transaction.updated_at.strftime("%B %d, %Y")],
+        ["Date", transaction.updated_at.strftime("%B %d, %Y %H:%M")],
         ["Member Name", donor_name or "N/A"],
         ["Email Address", donor_email or "N/A"],
         ["Phone Number", transaction.phone_number],

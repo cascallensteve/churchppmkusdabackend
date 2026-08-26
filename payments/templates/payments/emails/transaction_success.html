@@ -41,12 +41,8 @@
 
             <div class="receipt-card">
                 <div class="receipt-row">
-                    <span class="receipt-label">Receipt Number</span>
-                    <span class="receipt-value">#{{ transaction.id }}</span>
-                </div>
-                <div class="receipt-row">
                     <span class="receipt-label">Date</span>
-                    <span class="receipt-value">{{ transaction.updated_at|date:"F j, Y" }}</span>
+                    <span class="receipt-value">{{ transaction.updated_at|date:"F j, Y" }} {{ transaction.updated_at|date:"H:i" }}</span>
                 </div>
                 <div class="receipt-row">
                     <span class="receipt-label">Member Name</span>
