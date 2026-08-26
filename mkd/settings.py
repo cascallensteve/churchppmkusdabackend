@@ -135,8 +135,8 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'cascallensteve@gmail.com'
-EMAIL_HOST_PASSWORD = 'xivpyblbpyfpsimf'
-DEFAULT_FROM_EMAIL = 'MKUSDA Treasury <cascallensteve@gmail.com>'
+EMAIL_HOST_PASSWORD = 'eisk wjwa toyp mtuu'
+DEFAULT_FROM_EMAIL = 'cascallensteve@gmail.com'
 
 MPESA_CONSUMER_KEY = config('MPESA_CONSUMER_KEY', default='')
 MPESA_CONSUMER_SECRET = config('MPESA_CONSUMER_SECRET', default='')
