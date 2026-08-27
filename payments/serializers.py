@@ -49,7 +49,8 @@ class ManualDonationSerializer(serializers.ModelSerializer):
 
 
 class ExpenseSerializer(serializers.ModelSerializer):
-    created_by_email = serializers.EmailField(source='created_by.email', read_only=True)
+    created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
+    created_by_profile_picture = serializers.URLField(source='created_by.profile_picture', read_only=True)
     remaining_balance = serializers.SerializerMethodField()
     initial_balance = serializers.SerializerMethodField()
 
@@ -57,9 +58,9 @@ class ExpenseSerializer(serializers.ModelSerializer):
         model = Expense
         fields = [
             'id', 'donation_type', 'amount', 'description',
-            'created_by', 'created_by_email', 'initial_balance', 'remaining_balance', 'created_at'
+            'created_by', 'created_by_name', 'created_by_profile_picture', 'initial_balance', 'remaining_balance', 'created_at'
         ]
-        read_only_fields = ['id', 'created_by', 'created_by_email', 'initial_balance', 'remaining_balance', 'created_at']
+        read_only_fields = ['id', 'created_by', 'created_by_name', 'created_by_profile_picture', 'initial_balance', 'remaining_balance', 'created_at']
 
     def get_initial_balance(self, obj):
         return (obj.donation_type.balance or 0) + obj.amount
@@ -98,18 +99,19 @@ class ExpenseSerializer(serializers.ModelSerializer):
 
 
 class AllocationSerializer(serializers.ModelSerializer):
-    allocated_by_email = serializers.EmailField(source='allocated_by.email', read_only=True)
+    allocated_by_name = serializers.CharField(source='allocated_by.get_full_name', read_only=True)
+    allocated_by_profile_picture = serializers.URLField(source='allocated_by.profile_picture', read_only=True)
     remaining_balance = serializers.SerializerMethodField()
     initial_balance = serializers.SerializerMethodField()
 
     class Meta:
         model = Allocation
         fields = [
-            'id', 'donation_type', 'amount', 'allocated_by', 'allocated_by_email',
+            'id', 'donation_type', 'amount', 'allocated_by', 'allocated_by_name', 'allocated_by_profile_picture',
             'recipient_name', 'recipient_email', 'purpose', 'initial_balance',
             'remaining_balance', 'created_at'
         ]
-        read_only_fields = ['id', 'allocated_by', 'allocated_by_email', 'initial_balance', 'remaining_balance', 'created_at']
+        read_only_fields = ['id', 'allocated_by', 'allocated_by_name', 'allocated_by_profile_picture', 'initial_balance', 'remaining_balance', 'created_at']
 
     def get_initial_balance(self, obj):
         return (obj.donation_type.balance or 0) + obj.amount
@@ -147,7 +149,8 @@ class AllocationSerializer(serializers.ModelSerializer):
 
 
 class AdjustmentSerializer(serializers.ModelSerializer):
-    created_by_email = serializers.EmailField(source='created_by.email', read_only=True)
+    created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
+    created_by_profile_picture = serializers.URLField(source='created_by.profile_picture', read_only=True)
     new_balance = serializers.SerializerMethodField()
     initial_balance = serializers.SerializerMethodField()
 
@@ -155,9 +158,10 @@ class AdjustmentSerializer(serializers.ModelSerializer):
         model = Adjustment
         fields = [
             'id', 'donation_type', 'amount', 'reason',
-            'created_by', 'created_by_email', 'initial_balance', 'new_balance', 'created_at'
+            'created_by', 'created_by_name', 'created_by_profile_picture',
+            'initial_balance', 'new_balance', 'created_at'
         ]
-        read_only_fields = ['id', 'created_by', 'created_by_email', 'initial_balance', 'new_balance', 'created_at']
+        read_only_fields = ['id', 'created_by', 'created_by_name', 'created_by_profile_picture', 'initial_balance', 'new_balance', 'created_at']
 
     def get_initial_balance(self, obj):
         return (obj.donation_type.balance or 0) - obj.amount
