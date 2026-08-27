@@ -28,7 +28,9 @@ class AdminCashTransactionSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data['payment_method'] = Transaction.CASH
         validated_data['status'] = Transaction.SUCCESS
-        return super().create(validated_data)
+        transaction = super().create(validated_data)
+        transaction.donation_type.update_balance()
+        return transaction
 
 
 class ManualDonationSerializer(serializers.ModelSerializer):
@@ -41,7 +43,9 @@ class ManualDonationSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         validated_data['status'] = Transaction.SUCCESS
-        return super().create(validated_data)
+        transaction = super().create(validated_data)
+        transaction.donation_type.update_balance()
+        return transaction
 
 
 class ExpenseSerializer(serializers.ModelSerializer):
@@ -71,10 +75,11 @@ class ExpenseSerializer(serializers.ModelSerializer):
             if amount <= 0:
                 raise serializers.ValidationError({'amount': 'Amount must be greater than zero.'})
 
+            donation_type_name = donation_type.name
             current_balance = donation_type.balance or 0
             if amount > current_balance:
                 raise serializers.ValidationError({
-                    'detail': f'Insufficient funds. Current balance: {current_balance}, requested: {amount}'
+                    'detail': f'Insufficient funds in {donation_type_name}. Current balance: {current_balance}, requested: {amount}'
                 })
 
         return data
@@ -83,10 +88,7 @@ class ExpenseSerializer(serializers.ModelSerializer):
         validated_data['created_by'] = self.context['request'].user
         donation_type = validated_data['donation_type']
         expense = super().create(validated_data)
-
-        donation_type.balance = (donation_type.balance or 0) - expense.amount
-        donation_type.save(update_fields=['balance'])
-
+        donation_type.update_balance()
         return expense
 
 
@@ -111,10 +113,11 @@ class AllocationSerializer(serializers.ModelSerializer):
             if amount <= 0:
                 raise serializers.ValidationError({'amount': 'Amount must be greater than zero.'})
 
+            donation_type_name = donation_type.name
             current_balance = donation_type.balance or 0
             if amount > current_balance:
                 raise serializers.ValidationError({
-                    'detail': f'Insufficient funds. Current balance: {current_balance}, requested: {amount}'
+                    'detail': f'Insufficient funds in {donation_type_name}. Current balance: {current_balance}, requested: {amount}'
                 })
 
         return data
@@ -122,9 +125,5 @@ class AllocationSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data['allocated_by'] = self.context['request'].user
         allocation = super().create(validated_data)
-
-        donation_type = allocation.donation_type
-        donation_type.balance = (donation_type.balance or 0) - allocation.amount
-        donation_type.save(update_fields=['balance'])
-
+        allocation.donation_type.update_balance()
         return allocation

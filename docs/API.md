@@ -480,3 +480,44 @@ Record an expense/spending against a donation type account and return the remain
     }
 }
 
+
+
+**400 Bad Request**
+
+```json
+{
+    "amount": ["Amount must be greater than zero."]
+}
+```
+
+or
+
+```json
+{
+    "detail": "Insufficient funds in Tithe. Current balance: 1000.00, requested: 2500.00"
+}
+```
+
+**401 Unauthorized**
+
+```json
+{
+    "detail": "Authentication credentials were not provided."
+}
+```
+
+**403 Forbidden**
+
+```json
+{
+    "detail": "You do not have permission to perform this action."
+}
+```
+
+**404 Not Found**
+
+```json
+{
+    "detail": "Donation type not found."
+}
+```

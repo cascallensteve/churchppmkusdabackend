@@ -249,6 +249,7 @@ def mpesa_callback_view(request):
             transaction.status = Transaction.SUCCESS
             transaction.mpesa_receipt = mpesa_receipt
             transaction.save(update_fields=['status', 'mpesa_receipt'])
+            transaction.donation_type.update_balance()
 
             if transaction.donor_email:
                 try:
