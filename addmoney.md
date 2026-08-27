@@ -46,6 +46,7 @@ Add funds to a donation type account manually.
         "reason": "Bank deposit correction",
         "created_by": 1,
         "created_by_email": "admin@example.com",
+        "initial_balance": "15000.00",
         "new_balance": "20000.00",
         "created_at": "2026-08-27T11:40:00Z"
     }
@@ -75,6 +76,7 @@ Manage all fund adjustments for donation type accounts.
         "reason": "Bank deposit correction",
         "created_by": 1,
         "created_by_email": "admin@example.com",
+        "initial_balance": "15000.00",
         "new_balance": "20000.00",
         "created_at": "2026-08-27T11:40:00Z"
     }
@@ -107,6 +109,7 @@ Manage all fund adjustments for donation type accounts.
     "reason": "Updated bank deposit",
     "created_by": 1,
     "created_by_email": "admin@example.com",
+    "initial_balance": "15000.00",
     "new_balance": "21000.00",
     "created_at": "2026-08-27T11:40:00Z"
 }
@@ -243,7 +246,7 @@ Manage all expenses for donation type accounts.
 
 The donation type balance is recalculated automatically after deletion.
 
----
+
 
 ## 5. Allocate Funds
 
@@ -291,6 +294,7 @@ Allocate funds from a donation type account to a recipient.
         "recipient_name": "Grace Ministry",
         "recipient_email": "grace@example.com",
         "purpose": "Youth program funding",
+        "initial_balance": "15000.00",
         "remaining_balance": "10000.00",
         "created_at": "2026-08-26T18:00:00Z"
     }

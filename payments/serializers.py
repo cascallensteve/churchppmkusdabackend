@@ -99,16 +99,23 @@ class ExpenseSerializer(serializers.ModelSerializer):
 
 class AllocationSerializer(serializers.ModelSerializer):
     allocated_by_email = serializers.EmailField(source='allocated_by.email', read_only=True)
-    remaining_balance = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+    remaining_balance = serializers.SerializerMethodField()
+    initial_balance = serializers.SerializerMethodField()
 
     class Meta:
         model = Allocation
         fields = [
             'id', 'donation_type', 'amount', 'allocated_by', 'allocated_by_email',
-            'recipient_name', 'recipient_email', 'purpose', 'remaining_balance',
-            'created_at'
+            'recipient_name', 'recipient_email', 'purpose', 'initial_balance',
+            'remaining_balance', 'created_at'
         ]
-        read_only_fields = ['id', 'allocated_by', 'allocated_by_email', 'remaining_balance', 'created_at']
+        read_only_fields = ['id', 'allocated_by', 'allocated_by_email', 'initial_balance', 'remaining_balance', 'created_at']
+
+    def get_initial_balance(self, obj):
+        return (obj.donation_type.balance or 0) + obj.amount
+
+    def get_remaining_balance(self, obj):
+        return obj.donation_type.balance or 0
 
     def validate(self, data):
         donation_type = data.get('donation_type')
@@ -142,14 +149,18 @@ class AllocationSerializer(serializers.ModelSerializer):
 class AdjustmentSerializer(serializers.ModelSerializer):
     created_by_email = serializers.EmailField(source='created_by.email', read_only=True)
     new_balance = serializers.SerializerMethodField()
+    initial_balance = serializers.SerializerMethodField()
 
     class Meta:
         model = Adjustment
         fields = [
             'id', 'donation_type', 'amount', 'reason',
-            'created_by', 'created_by_email', 'new_balance', 'created_at'
+            'created_by', 'created_by_email', 'initial_balance', 'new_balance', 'created_at'
         ]
-        read_only_fields = ['id', 'created_by', 'created_by_email', 'new_balance', 'created_at']
+        read_only_fields = ['id', 'created_by', 'created_by_email', 'initial_balance', 'new_balance', 'created_at']
+
+    def get_initial_balance(self, obj):
+        return (obj.donation_type.balance or 0) - obj.amount
 
     def get_new_balance(self, obj):
         return obj.donation_type.balance or 0
