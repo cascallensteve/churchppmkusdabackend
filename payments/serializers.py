@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Transaction, Allocation
+from .models import Transaction, Allocation, Expense
 
 
 class TransactionSerializer(serializers.ModelSerializer):
@@ -42,6 +42,52 @@ class ManualDonationSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data['status'] = Transaction.SUCCESS
         return super().create(validated_data)
+
+
+class ExpenseSerializer(serializers.ModelSerializer):
+    created_by_email = serializers.EmailField(source='created_by.email', read_only=True)
+    remaining_balance = serializers.SerializerMethodField()
+    initial_balance = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Expense
+        fields = [
+            'id', 'donation_type', 'amount', 'description',
+            'created_by', 'created_by_email', 'initial_balance', 'remaining_balance', 'created_at'
+        ]
+        read_only_fields = ['id', 'created_by', 'created_by_email', 'initial_balance', 'remaining_balance', 'created_at']
+
+    def get_initial_balance(self, obj):
+        return (obj.donation_type.balance or 0) + obj.amount
+
+    def get_remaining_balance(self, obj):
+        return obj.donation_type.balance or 0
+
+    def validate(self, data):
+        donation_type = data.get('donation_type')
+        amount = data.get('amount')
+
+        if donation_type and amount:
+            if amount <= 0:
+                raise serializers.ValidationError({'amount': 'Amount must be greater than zero.'})
+
+            current_balance = donation_type.balance or 0
+            if amount > current_balance:
+                raise serializers.ValidationError({
+                    'detail': f'Insufficient funds. Current balance: {current_balance}, requested: {amount}'
+                })
+
+        return data
+
+    def create(self, validated_data):
+        validated_data['created_by'] = self.context['request'].user
+        donation_type = validated_data['donation_type']
+        expense = super().create(validated_data)
+
+        donation_type.balance = (donation_type.balance or 0) - expense.amount
+        donation_type.save(update_fields=['balance'])
+
+        return expense
 
 
 class AllocationSerializer(serializers.ModelSerializer):

@@ -11,7 +11,7 @@ from django.template.loader import render_to_string
 from django.db.models import Sum, Count, Q
 from .models import Transaction, Allocation
 from donation.models import DonationType
-from .serializers import TransactionSerializer, AdminCashTransactionSerializer, AllocationSerializer, ManualDonationSerializer
+from .serializers import TransactionSerializer, AdminCashTransactionSerializer, AllocationSerializer, ManualDonationSerializer, ExpenseSerializer
 from .services import MpesaService
 from .pdf_utils import generate_receipt_pdf
 
@@ -450,6 +450,22 @@ def manual_donation_view(request):
         {
             'detail': 'Manual donation entry created successfully.',
             'transaction': TransactionSerializer(transaction).data,
+        },
+        status=status.HTTP_201_CREATED,
+    )
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAdminUser])
+def spend_funds_view(request):
+    serializer = ExpenseSerializer(data=request.data, context={'request': request})
+    serializer.is_valid(raise_exception=True)
+    expense = serializer.save()
+
+    return Response(
+        {
+            'detail': 'Expense recorded successfully.',
+            'expense': ExpenseSerializer(expense).data,
         },
         status=status.HTTP_201_CREATED,
     )

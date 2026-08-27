@@ -387,6 +387,7 @@ None. This is a GET endpoint.
         "mpesa_amount": 15000.00,
         "total_allocated": 5000.00
     },
+
     {
         "id": 2,
         "name": "Offering",
@@ -436,3 +437,46 @@ None. This is a GET endpoint.
     "detail": "You do not have permission to perform this action."
 }
 ```
+
+
+---
+
+## 9. Record Spending (Admin)
+
+Record an expense/spending against a donation type account and return the remaining balance. Admin-only.
+
+### Endpoint
+
+- **URL:** `/api/payments/spend/`
+- **Method:** `POST`
+- **Auth:** Admin user
+
+### Payload
+
+```json
+{
+    "donation_type": 1,
+    "amount": 2500.00,
+    "description": "Purchase of communion elements"
+}
+```
+
+
+**201 Created**
+
+```json
+{
+    "detail": "Expense recorded successfully.",
+    "expense": {
+        "id": 1,
+        "donation_type": 1,
+        "amount": "2500.00",
+        "description": "Purchase of communion elements",
+        "created_by": 1,
+        "created_by_email": "admin@example.com",
+        "initial_balance": "15000.00",
+        "remaining_balance": "12500.00",
+        "created_at": "2026-08-26T17:16:00Z"
+    }
+}
+
