@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Transaction, Allocation, Expense
+from .models import Transaction, Allocation, Expense, Adjustment
 
 
 class TransactionSerializer(serializers.ModelSerializer):
@@ -127,3 +127,35 @@ class AllocationSerializer(serializers.ModelSerializer):
         allocation = super().create(validated_data)
         allocation.donation_type.update_balance()
         return allocation
+
+
+class AdjustmentSerializer(serializers.ModelSerializer):
+    created_by_email = serializers.EmailField(source='created_by.email', read_only=True)
+    new_balance = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Adjustment
+        fields = [
+            'id', 'donation_type', 'amount', 'reason',
+            'created_by', 'created_by_email', 'new_balance', 'created_at'
+        ]
+        read_only_fields = ['id', 'created_by', 'created_by_email', 'new_balance', 'created_at']
+
+    def get_new_balance(self, obj):
+        return obj.donation_type.balance or 0
+
+    def validate(self, data):
+        donation_type = data.get('donation_type')
+        amount = data.get('amount')
+
+        if donation_type and amount:
+            if amount <= 0:
+                raise serializers.ValidationError({'amount': 'Amount must be greater than zero.'})
+
+        return data
+
+    def create(self, validated_data):
+        validated_data['created_by'] = self.context['request'].user
+        adjustment = super().create(validated_data)
+        adjustment.donation_type.update_balance()
+        return adjustment

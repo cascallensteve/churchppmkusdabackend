@@ -9,9 +9,9 @@ from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.db.models import Sum, Count, Q
-from .models import Transaction, Allocation
+from .models import Transaction, Allocation, Expense, Adjustment
 from donation.models import DonationType
-from .serializers import TransactionSerializer, AdminCashTransactionSerializer, AllocationSerializer, ManualDonationSerializer, ExpenseSerializer
+from .serializers import TransactionSerializer, AdminCashTransactionSerializer, AllocationSerializer, ManualDonationSerializer, ExpenseSerializer, AdjustmentSerializer
 from .services import MpesaService
 from .pdf_utils import generate_receipt_pdf
 
@@ -467,6 +467,22 @@ def spend_funds_view(request):
         {
             'detail': 'Expense recorded successfully.',
             'expense': ExpenseSerializer(expense).data,
+        },
+        status=status.HTTP_201_CREATED,
+    )
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAdminUser])
+def adjust_funds_view(request):
+    serializer = AdjustmentSerializer(data=request.data, context={'request': request})
+    serializer.is_valid(raise_exception=True)
+    adjustment = serializer.save()
+
+    return Response(
+        {
+            'detail': 'Funds adjusted successfully.',
+            'adjustment': AdjustmentSerializer(adjustment).data,
         },
         status=status.HTTP_201_CREATED,
     )

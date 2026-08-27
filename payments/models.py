@@ -74,3 +74,17 @@ class Expense(models.Model):
 
     def __str__(self):
         return f"{self.donation_type.name} - {self.amount} - {self.description}"
+
+
+class Adjustment(models.Model):
+    donation_type = models.ForeignKey(DonationType, on_delete=models.PROTECT, related_name='adjustments')
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    reason = models.CharField(max_length=255)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='adjustments')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.donation_type.name} + {self.amount} - {self.reason}"

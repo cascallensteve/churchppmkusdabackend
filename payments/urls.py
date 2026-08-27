@@ -14,6 +14,7 @@ urlpatterns = [
     path('transactions/cash/', views.admin_cash_transaction_view, name='admin-cash-transaction'),
     path('manual-donation/', views.manual_donation_view, name='manual-donation'),
     path('spend/', views.spend_funds_view, name='spend-funds'),
+    path('adjust/', views.adjust_funds_view, name='adjust-funds'),
     path('allocate/', views.allocate_funds_view, name='allocate-funds'),
     path('stats/donation-types/', views.donation_stats_view, name='donation-stats'),
 ]

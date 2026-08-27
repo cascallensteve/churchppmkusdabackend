@@ -16,7 +16,7 @@ class DonationType(models.Model):
         return self.name
 
     def update_balance(self):
-        from payments.models import Transaction, Allocation, Expense
+        from payments.models import Transaction, Allocation, Expense, Adjustment
         total_in = Transaction.objects.filter(
             donation_type=self,
             status=Transaction.SUCCESS
@@ -27,5 +27,8 @@ class DonationType(models.Model):
         total_spent = Expense.objects.filter(
             donation_type=self
         ).aggregate(total=models.Sum('amount'))['total'] or 0
-        self.balance = total_in - total_allocated - total_spent
+        total_adjustments = Adjustment.objects.filter(
+            donation_type=self
+        ).aggregate(total=models.Sum('amount'))['total'] or 0
+        self.balance = total_in - total_allocated - total_spent + total_adjustments
         self.save(update_fields=['balance'])
