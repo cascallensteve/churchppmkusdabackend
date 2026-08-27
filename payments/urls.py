@@ -16,5 +16,11 @@ urlpatterns = [
     path('spend/', views.spend_funds_view, name='spend-funds'),
     path('adjust/', views.adjust_funds_view, name='adjust-funds'),
     path('allocate/', views.allocate_funds_view, name='allocate-funds'),
+    path('adjustments/', views.AdjustmentListCreateView.as_view(), name='adjustment-list'),
+    path('adjustments/<int:pk>/', views.AdjustmentDetailView.as_view(), name='adjustment-detail'),
+    path('expenses/', views.ExpenseListCreateView.as_view(), name='expense-list'),
+    path('expenses/<int:pk>/', views.ExpenseDetailView.as_view(), name='expense-detail'),
+    path('allocations/', views.AllocationListCreateView.as_view(), name='allocation-list'),
+    path('allocations/<int:pk>/', views.AllocationDetailView.as_view(), name='allocation-detail'),
     path('stats/donation-types/', views.donation_stats_view, name='donation-stats'),
 ]

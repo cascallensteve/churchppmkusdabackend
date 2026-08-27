@@ -581,3 +581,54 @@ def donation_stats_view(request):
         })
 
     return Response(stats, status=status.HTTP_200_OK)
+
+
+class AdjustmentListCreateView(generics.ListCreateAPIView):
+    serializer_class = AdjustmentSerializer
+    permission_classes = [permissions.IsAdminUser]
+    queryset = Adjustment.objects.all()
+
+
+class AdjustmentDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = AdjustmentSerializer
+    permission_classes = [permissions.IsAdminUser]
+    queryset = Adjustment.objects.all()
+
+    def perform_destroy(self, instance):
+        donation_type = instance.donation_type
+        instance.delete()
+        donation_type.update_balance()
+
+
+class ExpenseListCreateView(generics.ListCreateAPIView):
+    serializer_class = ExpenseSerializer
+    permission_classes = [permissions.IsAdminUser]
+    queryset = Expense.objects.all()
+
+
+class ExpenseDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = ExpenseSerializer
+    permission_classes = [permissions.IsAdminUser]
+    queryset = Expense.objects.all()
+
+    def perform_destroy(self, instance):
+        donation_type = instance.donation_type
+        instance.delete()
+        donation_type.update_balance()
+
+
+class AllocationListCreateView(generics.ListCreateAPIView):
+    serializer_class = AllocationSerializer
+    permission_classes = [permissions.IsAdminUser]
+    queryset = Allocation.objects.all()
+
+
+class AllocationDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = AllocationSerializer
+    permission_classes = [permissions.IsAdminUser]
+    queryset = Allocation.objects.all()
+
+    def perform_destroy(self, instance):
+        donation_type = instance.donation_type
+        instance.delete()
+        donation_type.update_balance()

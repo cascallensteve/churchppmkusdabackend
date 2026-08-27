@@ -91,6 +91,11 @@ class ExpenseSerializer(serializers.ModelSerializer):
         donation_type.update_balance()
         return expense
 
+    def update(self, instance, validated_data):
+        instance = super().update(instance, validated_data)
+        instance.donation_type.update_balance()
+        return instance
+
 
 class AllocationSerializer(serializers.ModelSerializer):
     allocated_by_email = serializers.EmailField(source='allocated_by.email', read_only=True)
@@ -128,6 +133,11 @@ class AllocationSerializer(serializers.ModelSerializer):
         allocation.donation_type.update_balance()
         return allocation
 
+    def update(self, instance, validated_data):
+        instance = super().update(instance, validated_data)
+        instance.donation_type.update_balance()
+        return instance
+
 
 class AdjustmentSerializer(serializers.ModelSerializer):
     created_by_email = serializers.EmailField(source='created_by.email', read_only=True)
@@ -159,3 +169,8 @@ class AdjustmentSerializer(serializers.ModelSerializer):
         adjustment = super().create(validated_data)
         adjustment.donation_type.update_balance()
         return adjustment
+
+    def update(self, instance, validated_data):
+        instance = super().update(instance, validated_data)
+        instance.donation_type.update_balance()
+        return instance
